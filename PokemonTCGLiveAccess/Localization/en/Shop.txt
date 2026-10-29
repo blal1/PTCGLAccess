@@ -1,0 +1,26 @@
+TAG	TEXT	COMMENT
+SHOPUI_SHOP	Shop	screen name
+SHOPUI_HELP	Tab and Shift+Tab move between the top bar, the shop sections and each group of products; Up and Down at the edge of a group also move to the next one. Arrows move between products. Enter opens a product or activates a control. Escape opens the menu.	F1 on the shop
+SHOPUI_SECTION	Shop section	sub-tab group
+SHOPUI_REDEEM_CODE	Redeem a code	REDEEM controls group
+SHOPUI_REWARDS	Rewards	REDEEM scanned rewards group
+SHOPUI_CHOOSE_SET	Choose set	EXPANSIONS extra controls
+SHOPUI_MORE	More	extra controls group
+SHOPUI_SCANNED_CODE	Scanned code	reward without a name
+SHOPUI_REMOVE	{0}, remove	0=reward name
+SHOPUI_REWARD_ADDED	Reward added	code redeemed
+SHOPUI_PRODUCT_HELP	Arrows move between the purchase and booster odds buttons. Enter activates. Escape closes.	F1 in the product overlay
+SHOPUI_BOOSTER_ODDS	Booster pack odds	button
+SHOPUI_TIMES	{0} times {1}	0=item 1=count
+SHOPUI_CONTAINS	Contains {0}	0=item list
+SHOPUI_ITEM_BOOSTER	booster pack	item type
+SHOPUI_ITEM_COIN	coin	item type
+SHOPUI_ITEM_SLEEVE	card sleeve	item type
+SHOPUI_ITEM_DECK_BOX	deck box	item type
+SHOPUI_ITEM_DECK	deck	item type
+SHOPUI_ITEM_AVATAR	avatar item	item type
+SHOPUI_ITEM_BUILD_BATTLE	Build and Battle box	item type
+SHOPUI_ITEM_FEATURE	feature	item type
+SHOPUI_ITEM	item	item type
+SHOPUI_BUNDLES_HELP	Arrows move between the bundles. Enter opens one. Escape closes.	F1 in the all-bundles overlay
+SHOPUI_ALL_BUNDLES	All bundles	overlay name

@@ -1,0 +1,26 @@
+TAG	TEXT	COMMENT
+SHOPUI_SHOP	Boutique	screen name
+SHOPUI_HELP	Tab et Maj+Tab : passer de la barre du haut aux rubriques de la boutique et à chaque groupe de produits ; haut et bas au bord d'un groupe passent aussi au suivant. Flèches : changer de produit. Entrée : ouvrir un produit ou activer une commande. Échap : ouvrir le menu.	F1 on the shop
+SHOPUI_SECTION	Rubrique de la boutique	sub-tab group
+SHOPUI_REDEEM_CODE	Utiliser un code	REDEEM controls group
+SHOPUI_REWARDS	Récompenses	REDEEM scanned rewards group
+SHOPUI_CHOOSE_SET	Choisir une extension	EXPANSIONS extra controls
+SHOPUI_MORE	Plus	extra controls group
+SHOPUI_SCANNED_CODE	Code scanné	reward without a name
+SHOPUI_REMOVE	{0}, retirer	0=reward name
+SHOPUI_REWARD_ADDED	Récompense ajoutée	code redeemed
+SHOPUI_PRODUCT_HELP	Flèches : passer du bouton d'achat aux probabilités du booster. Entrée : activer. Échap : fermer.	F1 in the product overlay
+SHOPUI_BOOSTER_ODDS	Probabilités du booster	button
+SHOPUI_TIMES	{0} x {1}	0=item 1=count
+SHOPUI_CONTAINS	Contient {0}	0=item list
+SHOPUI_ITEM_BOOSTER	booster	item type
+SHOPUI_ITEM_COIN	pièce	item type
+SHOPUI_ITEM_SLEEVE	protège-cartes	item type
+SHOPUI_ITEM_DECK_BOX	boîte de deck	item type
+SHOPUI_ITEM_DECK	deck	item type
+SHOPUI_ITEM_AVATAR	objet d'avatar	item type
+SHOPUI_ITEM_BUILD_BATTLE	coffret Construire et Combattre	item type
+SHOPUI_ITEM_FEATURE	fonctionnalité	item type
+SHOPUI_ITEM	objet	item type
+SHOPUI_BUNDLES_HELP	Flèches : changer de lot. Entrée : ouvrir. Échap : fermer.	F1 in the all-bundles overlay
+SHOPUI_ALL_BUNDLES	Tous les lots	overlay name
