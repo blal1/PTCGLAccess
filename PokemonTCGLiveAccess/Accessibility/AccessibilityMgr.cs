@@ -129,7 +129,8 @@ internal static class AccessibilityMgr
     {
         LocalizationUtils.Update();
         HandleWindowFocus();
-        foreach (var poll in s_pollers)
+        // Off means off: pollers also act on keys (hub tab digits), not only speak.
+        if (s_enabled) foreach (var poll in s_pollers)
         {
             try { poll(); }
             catch (Exception e)
