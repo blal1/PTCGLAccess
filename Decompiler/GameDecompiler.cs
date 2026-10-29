@@ -13,7 +13,7 @@ public sealed class GameDecompiler
     private static readonly string[] s_skippedPrefixes =
     {
         "Unity", "System", "Mono.", "mscorlib", "netstandard", "Microsoft.", "Newtonsoft.", "Google.", "Firebase",
-        "Facebook", "AppsFlyer", "Sentry", "DOTween", "Cinemachine", "Coffee.", "Spine", "TextMeshPro", "Rewired",
+        "Facebook", "AppsFlyer", "AWSSDK", "Sentry", "DOTween", "Cinemachine", "Coffee.", "Spine", "TextMeshPro", "Rewired",
     };
 
     private readonly string _gameDir;
