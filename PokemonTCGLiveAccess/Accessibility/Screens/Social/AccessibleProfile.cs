@@ -1,7 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using TPCI.Avatar.Customizations;
+using TPCI.Coroutines;
 using UnityEngine;
 using UnityEngine.UI;
 using static Accessibility.GameReflect;
@@ -26,6 +28,8 @@ namespace Accessibility;
 internal sealed class AccessibleProfile : AccessibleScreen, ISharesPlayerName
 {
     private static readonly AccessibleProfile s_instance = new();
+
+    private AccessibleProfile() => FtueTracker.FocusedElementChanged += OnFtueFocusChanged;
 
     private readonly List<KeyboardNavigator> m_groups = new();
     private int m_activeGroup = -1;
@@ -86,9 +90,34 @@ internal sealed class AccessibleProfile : AccessibleScreen, ISharesPlayerName
     // closing UI just spoke.
     public void OnGainedFocus()
     {
+        CancelFtueSettlementWait();
+        // FTUE-focused element wins over everything else — if the tutorial has highlighted
+        // a specific button on us, point our nav at it.
+        if (FtueTracker.FtueIsRunning && FtueTracker.FocusedElement is { } target && target.isActiveAndEnabled)
+        {
+            RebuildForFtue();
+            return;
+        }
+
         RebuildGroups();
         if (m_groups.Count == 0) return;
 
+        if (FtueTracker.FtueIsRunning)
+        {
+            // Mirror the game's own pattern (DefaultFTUEController.WaitToEnable): start a
+            // coroutine that yields per-frame until native FTUE state resolves the
+            // ambiguity — either an FTUE state takes over (silent, the FTUE owns speech)
+            // or the animator settles with nothing running (announce).
+            m_activeGroup = PickDefaultGroup();
+            m_ftueWait = AnywhereCoroutine.Instance.unmanaged.StartCoroutine(WaitForFtueToSettle());
+            return;
+        }
+        AnnounceFocus();
+    }
+
+    private void AnnounceFocus()
+    {
+        if (m_groups.Count == 0) return;
         if (!m_announced)
         {
             m_announced = true;
@@ -103,6 +132,73 @@ internal sealed class AccessibleProfile : AccessibleScreen, ISharesPlayerName
         if (m_indexAtPause >= 0 && m_indexAtPause < g.Count) g.FocusIndex(m_indexAtPause, announce: true, interrupt: false);
         else g.FocusFirst(announce: true, interruptPrior: false);
     }
+
+    #region FTUE
+
+    private Coroutine? m_ftueWait;
+    private Selectable? m_lastFtueTarget;
+
+    private void CancelFtueSettlementWait()
+    {
+        if (m_ftueWait == null) return;
+        AnywhereCoroutine.Instance.unmanaged.StopCoroutine(m_ftueWait);
+        m_ftueWait = null;
+    }
+
+    // Native-state wait, modelled on DefaultFTUEController.WaitToEnable (which yields per frame until
+    // navBusy / consentDone / HasBlocker / InTransition all resolve before enabling the FTUE animator).
+    // Here we wait for the FTUE state machine to commit to one of two outcomes after we gained focus:
+    //   • An FTUE state behavior enters _currentRunningStates  → FTUE owns speech, stay silent.
+    //   • The FTUE animator is enabled and stable, with nothing speech-claiming → announce normally.
+    // No frame count: we yield until a native condition resolves.
+    private IEnumerator WaitForFtueToSettle()
+    {
+        var mgr = FTUEManager.instance;
+        var animator = mgr != null ? mgr.GetComponent<Animator>() : null;
+        // Phase 1: wait for the FTUE animator to actually be enabled.
+        while (FtueTracker.FtueIsRunning && animator != null && !animator.enabled) yield return null;
+        // Phase 2: one frame so its first state transition can run and call AddToCurrentRunningStates
+        // (the animator's update phase happens after MonoBehaviour Update).
+        yield return null;
+        m_ftueWait = null;
+        // Phase 3: a speech-claiming FTUE state (dialogue / indicator) owns speech — stay silent and let the
+        // dialogue / focused-element path announce. Passive states (waits, analytics) don't claim it.
+        if (FtueTracker.FtueSpeechClaimingStateActive)
+        {
+            Log.Info("Profile: FTUE speech-claim active, staying silent");
+            yield break;
+        }
+        if (m_controller != null && AccessibilityMgr.IsFocused(this)) AnnounceFocus();
+    }
+
+    // FTUE has highlighted a specific button on this screen. Replace all groups with a single-item nav
+    // containing just that Selectable — matches what the game's input blocker allows the player to click.
+    private void RebuildForFtue()
+    {
+        CancelFtueSettlementWait();
+        foreach (var g in m_groups) g.Detach();
+        m_groups.Clear();
+        m_activeGroup = -1;
+        var target = FtueTracker.FocusedElement;
+        m_lastFtueTarget = target;
+        if (target == null || !target.isActiveAndEnabled) return;
+        var nav = AddGroup(new List<Selectable> { target });
+        // A coached Toggle is a tab, so Enter must SELECT it — see FtueTracker.
+        nav.RadioToggleMode = target is Toggle;
+        m_activeGroup = 0;
+        nav.FocusFirst(announce: true, interruptPrior: true);
+    }
+
+    private static void OnFtueFocusChanged()
+    {
+        var self = s_instance;
+        // Only react while we're the current screen; if a UI covers us, our next OnGainedFocus picks it up.
+        if (self.m_controller == null || AccessibilityMgr.CurrentScreen != self || !AccessibilityMgr.IsFocused(self)) return;
+        if (FtueTracker.FocusedElement == self.m_lastFtueTarget) return;
+        if (FtueTracker.FtueIsRunning) self.RebuildForFtue();
+    }
+
+    #endregion
 
     private void RebuildGroups()
     {
@@ -250,6 +346,7 @@ internal sealed class AccessibleProfile : AccessibleScreen, ISharesPlayerName
             if (s_instance.m_controller != __instance) return;
             AccessibleAddFriendOverlay.Hide();
             AccessibleAvatarCategory.Hide();
+            s_instance.CancelFtueSettlementWait();
             s_instance.m_controller = null;
             AccessibilityMgr.ClearScreen(s_instance);
         }
