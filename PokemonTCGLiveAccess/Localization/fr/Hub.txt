@@ -1,0 +1,67 @@
+TAG	TEXT	COMMENT
+HUB_HELP_WITH_GLOBAL_FORMAT	{0} {1}	F1 on a HUB screen: 0=the screen's keys 1=HUB_GLOBAL_KEYS_HELP
+HUB_GLOBAL_KEYS_HELP	Chiffres 1 à 9 : aller au Nième onglet de la barre du haut. P : lire vos monnaies.	global HUB shortcuts
+HUB_HOME	Accueil	HOME screen name
+HUB_HOME_HELP	Flèches haut et bas : passer d'une section à l'autre (barre du haut, modes de jeu, contenu, raccourcis). Flèches gauche et droite : se déplacer dans une section. Tab et Maj+Tab : section suivante et précédente. Entrée : activer ; sur un mode de jeu, le choisir et aller à son contenu. Échap : ouvrir le menu.	F1 on HOME
+HUB_GAME_MODE	Mode de jeu	HOME: game-mode tab strip
+HUB_NOT_SELECTED	non sélectionné	HOME: a game-mode tab that isn't the active one
+HUB_CASUAL_INFO	Informations sur le mode Occasionnel	HOME: the info button of the casual format carousel
+HUB_LEARNING_LAB	Labo d'apprentissage	LEARN tab lesson list, when the level has no name
+HUB_EMPTY	vide	empty list
+HUB_EMPTY_FORMAT	{0}, vide	0=list name
+HUB_LL_CLASSROOM_FORMAT	{0}, {1}, {2} leçons sur {3}	Learning Lab classroom: 0=name 1=difficulty 2=lessons done 3=lessons
+HUB_LL_CLASSROOM_NO_DIFFICULTY_FORMAT	{0}, {1} leçons sur {2}	Learning Lab classroom: 0=name 1=lessons done 2=lessons
+HUB_LL_LESSON_COMPLETE	{0}, terminée	Learning Lab lesson: 0=name
+HUB_LL_LESSON_NOT_COMPLETE	{0}, non terminée	Learning Lab lesson: 0=name
+HUB_DIFFICULTY_BEGINNER	débutant	Learning Lab difficulty
+HUB_DIFFICULTY_NOVICE	novice	Learning Lab difficulty
+HUB_DIFFICULTY_INTERMEDIATE	intermédiaire	Learning Lab difficulty
+HUB_DIFFICULTY_ADVANCED	avancé	Learning Lab difficulty
+HUB_DIFFICULTY_EXPERT	expert	Learning Lab difficulty
+HUB_DIFFICULTY_MASTER	maître	Learning Lab difficulty
+HUB_ITEM	objet	an item without a name
+HUB_BNB	Construction et Combat	Build and Battle popup without readable text
+HUB_BNB_INSTRUCTIONS	Instructions	Build and Battle tab: the instruction slides
+HUB_PAGE_FORMAT	page {0} sur {1}	carousel page: 0=page 1=pages
+HUB_PLAY	Jouer	Build and Battle buy-in button without readable text
+HUB_BNB_LOBBY	Salon Construction et Combat	Build and Battle run lobby screen name
+HUB_BNB_MATCHES_FORMAT	{0} matchs sur {1}	Build and Battle run progress: 0=played 1=total
+HUB_BNB_LOBBY_HELP	Flèches haut et bas : passer d'un bouton à l'autre. Entrée : activer.	F1 in the Build and Battle lobby
+HUB_INFORMATION	Informations	icon-only info button
+HUB_BACK	Retour	icon-only back button
+HUB_POPUP_HELP	Flèches : passer d'un bouton à l'autre. Entrée : activer. Échap : fermer, quand la fenêtre peut être fermée.	F1 on a Build and Battle popup
+HUB_SEARCHING	Recherche d'un adversaire	matchmaking, when the game shows no text
+HUB_OPPONENT_FOUND	Adversaire trouvé, le match commence	matchmaking succeeded
+HUB_MATCHMAKING_HELP	Entrée ou Échap : annuler la recherche.	F1 while searching for an opponent
+HUB_LEAGUE_TOWER	Tour des ligues	League Tower screen name
+HUB_LEAGUE_OPTIONS	Options de ligue	League Tower: header buttons
+HUB_SEASON_INFO	Informations sur la saison	League Tower: icon-only season info button
+HUB_CURRENT_RANK	rang actuel	League Tower tier status
+HUB_ACHIEVED	atteint	League Tower tier status
+HUB_LOCKED	verrouillé	League Tower tier / Battle Pass tier status
+HUB_LEAGUE_TOWER_HELP	Flèches gauche et droite : passer d'un rang à l'autre. Début et Fin : premier et dernier rang. Entrée : récompenses de la ligue. Flèche haut : options de ligue, puis barre du haut. Tab et Maj+Tab : section suivante et précédente. Échap : retour à l'accueil.	F1 on the League Tower
+HUB_BATTLE_PASS_HELP	Flèches haut et bas : passer d'une section à l'autre (barre du haut, Passe de combat, quêtes quotidiennes, récompenses). Flèches gauche et droite : se déplacer dans une section. Tab et Maj+Tab : section suivante et précédente. Entrée : récupérer, remplacer une quête ou réclamer une récompense. Échap : ouvrir le menu.	F1 on the Battle Pass
+HUB_DAILY_QUESTS	Quêtes quotidiennes	Battle Pass section
+HUB_REWARDS	Récompenses	Battle Pass section
+HUB_QUEST	Quête	daily quest without readable text
+HUB_ENDS_IN_FORMAT	se termine dans {0}	Battle Pass: 0=time left
+HUB_LEVEL_FORMAT	niveau {0}	Battle Pass level: 0=level
+HUB_EXPERIENCE_FORMAT	{0} points d'expérience	Battle Pass experience: 0=amount or progress
+HUB_FRACTION_FORMAT	{0} sur {1}	progress such as 3/10: 0=done 1=goal
+HUB_REWARD_FORMAT	récompense : {0}	daily quest: 0=rewards
+HUB_AND_FORMAT	{0} et {1}	two rewards
+HUB_TIMES_FORMAT	{0} fois {1}	0=item 1=count
+HUB_AMOUNT_FORMAT	{0} {1}	0=amount 1=currency name
+HUB_CLAIMED	récupéré	quest or Battle Pass tier state
+HUB_CLAIMED_AVAILABLE_IN_FORMAT	récupéré, disponible dans {0}	daily quest: 0=time until the next quest
+HUB_READY_TO_COLLECT	prêt à récupérer	quest or Battle Pass tier state
+HUB_CAN_BE_REPLACED	peut être remplacée	daily quest that can be rerolled
+HUB_COLLECT_ALL	Récupérer toutes les récompenses	Battle Pass collect all button
+HUB_TIER	Palier	Battle Pass tier without number
+HUB_TIER_FORMAT	Palier {0}	Battle Pass tier: 0=number
+HUB_ITEM_BOOSTER	booster	reward item
+HUB_ITEM_COIN	pièce	reward item
+HUB_ITEM_SLEEVE	protège-cartes	reward item
+HUB_ITEM_DECK_BOX	boîte de deck	reward item
+HUB_ITEM_DECK	deck	reward item
+HUB_ITEM_AVATAR	objet d'avatar	reward item

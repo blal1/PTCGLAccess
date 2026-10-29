@@ -1,0 +1,45 @@
+TAG	TEXT	COMMENT
+POPUP_TITLE_BODY	{0}. {1}	a popup's title then its message: 0=title 1=message
+POPUP_BUTTONS_HELP	Flèches : passer d'un bouton à l'autre. Entrée : appuyer sur un bouton. Espace : cocher une case. Échap ou Retour arrière : fermer ou annuler, quand la fenêtre le permet.	F1 on a popup with buttons
+POPUP_GROUPS_HELP	Tab et Maj+Tab : passer d'une partie de la fenêtre à l'autre. Flèches : se déplacer dans une partie. Entrée : appuyer sur un bouton. Espace : cocher une case. Échap ou Retour arrière : fermer ou annuler, quand la fenêtre le permet.	F1 on a popup with several groups (consent, modal with options)
+POPUP_CLOSE	Fermer	icon-only close button of a reward popup
+POPUP_SELECT_LANGUAGE	Choisir la langue	first launch language screen (fallback, the game's title is used first)
+POPUP_LANGUAGE_HELP	Flèches : parcourir la grille des langues. Entrée : choisir une langue, puis la confirmer.	F1 on the first launch language screen
+POPUP_CONFIRM	Confirmation	confirmation popup without readable text
+POPUP_ERROR	Erreur	error popup without readable text
+POPUP_INFORMATION	Information	information popup without readable text
+POPUP_INFO_HELP	L'information est lue à l'ouverture. Entrée, Échap ou Retour arrière : fermer.	F1 on an information popup
+POPUP_NEWS	Actualités	news popup without readable text
+POPUP_NEWS_HELP	Flèches gauche et droite : page précédente et suivante. Retour arrière : page précédente. Entrée : page suivante, ou continuer sur la dernière page.	F1 on the news popup
+POPUP_NEWS_PAGE_FORMAT	Page {0} sur {1}	news popup: 0=page 1=page count
+POPUP_TOOLTIP_HELP	Entrée, Espace, Échap ou Retour arrière : fermer le message du Professeur.	F1 on the Professor tooltip
+POPUP_DIALOGUE_HELP	Entrée, Espace, Échap ou Retour arrière : réplique suivante. Quand le tutoriel met un bouton en évidence, Entrée ou Espace appuie dessus.	F1 on the tutorial dialogue
+POPUP_TUTORIAL	Tutoriel	group name of the control the tutorial highlights
+POPUP_FTUE_FOCUS_HELP	Le tutoriel met une commande en évidence. Entrée ou Espace : l'activer.	F1 when only the tutorial's highlighted control is reachable
+POPUP_GIFT	Cadeau	gift popup without readable text
+POPUP_GIFT_HELP	Flèches haut et bas : lire le cadeau ligne par ligne. Entrée : accepter le cadeau.	F1 on a gift popup
+POPUP_GIFT_CANT_CLAIM	Impossible de récupérer le cadeau	gift popup without its accept button
+POPUP_ONE_REWARD	1 récompense	gift popup: reward count
+POPUP_REWARDS_FORMAT	{0} récompenses	gift popup: 0=reward count
+POPUP_REWARDS	Récompenses	reward popup heading before a list of items
+POPUP_SEASON_REWARDS	Récompenses de saison	season ladder popup without readable text
+POPUP_TIER_FORMAT	Palier {0}	battle pass tier: 0=tier number
+POPUP_ITEM_COUNT_FORMAT	{0} fois {1}	reward: 0=item name 1=count
+POPUP_ITEM_BOOSTER	booster	reward item type (fallback)
+POPUP_ITEM_COIN	pièce	reward item type (fallback)
+POPUP_ITEM_SLEEVE	protège-cartes	reward item type (fallback)
+POPUP_ITEM_DECK_BOX	boîte de deck	reward item type (fallback)
+POPUP_ITEM_DECK	deck	reward item type (fallback)
+POPUP_ITEM_AVATAR	objet d'avatar	reward item type (fallback)
+POPUP_ITEM	objet	reward item of unknown type
+POPUP_ITEM_GRANT_HELP	Entrée ou Retour arrière : révéler la récompense ou la carte suivante. Flèches haut et bas : lire les détails d'une carte. Flèche droite : bouton Tout récupérer. Flèche gauche : revenir à la récompense.	F1 on the reward reveal
+POPUP_COLLECT_ALL	Tout récupérer	reward reveal button (fallback, the game's text is used first)
+POPUP_CARDS	cartes	reward reveal total: unit after a number
+POPUP_COLLECTED_DONE	Récupéré. Appuyez sur Entrée : terminé.	end of the reward reveal without totals
+POPUP_COLLECTED_DONE_FORMAT	Récupéré. Total récupéré : {0}. Appuyez sur Entrée : terminé.	end of the reward reveal: 0=totals like "10 cards, 50 Crystals"
+POPUP_STAT_FORMAT	{0} {1}	reward reveal total: 0=number 1=unit
+POPUP_NEW_CARD_FORMAT	Nouvelle, {0}	revealed card not owned before: 0=card name
+POPUP_PACK	Booster	booster pack without a name
+POPUP_PACK_FORMAT	{0}, {1} cartes	sealed booster pack: 0=pack name 1=card count
+POPUP_RANK_ONE_POINT_GAINED	Plus 1 point de rang, {0} au total	after a ranked match: 0=new total
+POPUP_RANK_POINTS_GAINED	Plus {0} points de rang, {1} au total	after a ranked match: 0=points gained 1=new total
