@@ -80,3 +80,13 @@ COLLECTION_FTUE_ADD	ajouter	tutorial verb
 COLLECTION_FTUE_REMOVE	retirer	tutorial verb
 COLLECTION_FTUE_OPEN	ouvrir	tutorial verb
 COLLECTION_FTUE_SELECT	sélectionner	tutorial verb
+COLLECTION_CARD_DEX	Pokédex des cartes	screen name
+COLLECTION_CARD_DEX_HELP	Tab et Maj+Tab : passer de la barre du haut à la série, aux extensions, aux options d'affichage et à la collection de cartes ; haut et bas au bord d'une section passent aussi à la suivante. Flèches gauche et droite : changer d'extension ou de carte. Entrée : ouvrir une carte ou activer une commande. Échap : ouvrir le menu.	F1 on the Card Dex screen
+COLLECTION_SERIES	Série	Card Dex series selector
+COLLECTION_VIEW	Affichage	Card Dex view controls group
+COLLECTION_COLLECTED	{0} sur {1} obtenues	0=collected 1=total
+COLLECTION_CARD_DEX_KEY	Légende du Pokédex des cartes, informations	info button
+COLLECTION_SET_VIEW	Affichage de l'extension	master/main set toggle fallback
+COLLECTION_SETS	Extensions	Card Dex set carousel
+COLLECTION_NEW_CARDS	nouvelles cartes	set has new cards
+COLLECTION_CARD_COLLECTION	Collection de cartes	Card Dex grid

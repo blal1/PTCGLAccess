@@ -1,6 +1,6 @@
 namespace Accessibility;
 
-// Collection.txt: collection, deck list, deck editor, card details, exchange.
+// Collection.txt: collection, deck list, deck editor, Card Dex, card details, exchange.
 public sealed partial class LocalizationKey
 {
     #region Collection
@@ -85,5 +85,15 @@ public sealed partial class LocalizationKey
     public static readonly LocalizationKey COLLECTION_FTUE_REMOVE = new(nameof(COLLECTION_FTUE_REMOVE));
     public static readonly LocalizationKey COLLECTION_FTUE_OPEN = new(nameof(COLLECTION_FTUE_OPEN));
     public static readonly LocalizationKey COLLECTION_FTUE_SELECT = new(nameof(COLLECTION_FTUE_SELECT));
+    public static readonly LocalizationKey COLLECTION_CARD_DEX = new(nameof(COLLECTION_CARD_DEX));
+    public static readonly LocalizationKey COLLECTION_CARD_DEX_HELP = new(nameof(COLLECTION_CARD_DEX_HELP));
+    public static readonly LocalizationKey COLLECTION_SERIES = new(nameof(COLLECTION_SERIES));
+    public static readonly LocalizationKey COLLECTION_VIEW = new(nameof(COLLECTION_VIEW));
+    public static readonly LocalizationKey COLLECTION_COLLECTED = new(nameof(COLLECTION_COLLECTED));
+    public static readonly LocalizationKey COLLECTION_CARD_DEX_KEY = new(nameof(COLLECTION_CARD_DEX_KEY));
+    public static readonly LocalizationKey COLLECTION_SET_VIEW = new(nameof(COLLECTION_SET_VIEW));
+    public static readonly LocalizationKey COLLECTION_SETS = new(nameof(COLLECTION_SETS));
+    public static readonly LocalizationKey COLLECTION_NEW_CARDS = new(nameof(COLLECTION_NEW_CARDS));
+    public static readonly LocalizationKey COLLECTION_CARD_COLLECTION = new(nameof(COLLECTION_CARD_COLLECTION));
     #endregion
 }

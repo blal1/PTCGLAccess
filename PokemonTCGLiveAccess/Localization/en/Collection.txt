@@ -80,3 +80,13 @@ COLLECTION_FTUE_ADD	add	tutorial verb
 COLLECTION_FTUE_REMOVE	remove	tutorial verb
 COLLECTION_FTUE_OPEN	open	tutorial verb
 COLLECTION_FTUE_SELECT	select	tutorial verb
+COLLECTION_CARD_DEX	Card Dex	screen name
+COLLECTION_CARD_DEX_HELP	Tab and Shift+Tab move between the top bar, the series, the sets, the view controls and the card collection; Up and Down at the edge of a section also move to the next one. Left and Right arrows change set or card. Enter opens a card or activates a control. Escape opens the menu.	F1 on the Card Dex screen
+COLLECTION_SERIES	Series	Card Dex series selector
+COLLECTION_VIEW	View	Card Dex view controls group
+COLLECTION_COLLECTED	{0} of {1} collected	0=collected 1=total
+COLLECTION_CARD_DEX_KEY	Card Dex key, information	info button
+COLLECTION_SET_VIEW	Set view	master/main set toggle fallback
+COLLECTION_SETS	Sets	Card Dex set carousel
+COLLECTION_NEW_CARDS	new cards	set has new cards
+COLLECTION_CARD_COLLECTION	Card collection	Card Dex grid
