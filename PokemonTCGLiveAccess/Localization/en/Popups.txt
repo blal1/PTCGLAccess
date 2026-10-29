@@ -1,0 +1,45 @@
+TAG	TEXT	COMMENT
+POPUP_TITLE_BODY	{0}. {1}	a popup's title then its message: 0=title 1=message
+POPUP_BUTTONS_HELP	Arrows: move between the buttons. Enter: press a button. Space: check a box. Escape or Backspace: close or cancel, when the popup allows it.	F1 on a popup with buttons
+POPUP_GROUPS_HELP	Tab and Shift+Tab: move between the parts of the popup. Arrows: move inside a part. Enter: press a button. Space: check a box. Escape or Backspace: close or cancel, when the popup allows it.	F1 on a popup with several groups (consent, modal with options)
+POPUP_CLOSE	Close	icon-only close button of a reward popup
+POPUP_SELECT_LANGUAGE	Select language	first launch language screen (fallback, the game's title is used first)
+POPUP_LANGUAGE_HELP	Arrows: move across the grid of languages. Enter: choose a language, then confirm it.	F1 on the first launch language screen
+POPUP_CONFIRM	Confirm	confirmation popup without readable text
+POPUP_ERROR	Error	error popup without readable text
+POPUP_INFORMATION	Information	information popup without readable text
+POPUP_INFO_HELP	The information is read when the popup opens. Enter, Escape or Backspace: close.	F1 on an information popup
+POPUP_NEWS	News	news popup without readable text
+POPUP_NEWS_HELP	Left and Right arrows: previous and next page. Backspace: previous page. Enter: next page, or continue on the last page.	F1 on the news popup
+POPUP_NEWS_PAGE_FORMAT	Page {0} of {1}	news popup: 0=page 1=page count
+POPUP_TOOLTIP_HELP	Enter, Space, Escape or Backspace: close the Professor's message.	F1 on the Professor tooltip
+POPUP_DIALOGUE_HELP	Enter, Space, Escape or Backspace: next line of dialogue. When the tutorial highlights a button, Enter or Space presses it.	F1 on the tutorial dialogue
+POPUP_TUTORIAL	Tutorial	group name of the control the tutorial highlights
+POPUP_FTUE_FOCUS_HELP	The tutorial highlights one control. Enter or Space: activate it.	F1 when only the tutorial's highlighted control is reachable
+POPUP_GIFT	Gift	gift popup without readable text
+POPUP_GIFT_HELP	Up and Down arrows: read the gift line by line. Enter: accept the gift.	F1 on a gift popup
+POPUP_GIFT_CANT_CLAIM	Can't claim the gift	gift popup without its accept button
+POPUP_ONE_REWARD	1 reward	gift popup: reward count
+POPUP_REWARDS_FORMAT	{0} rewards	gift popup: 0=reward count
+POPUP_REWARDS	Rewards	reward popup heading before a list of items
+POPUP_SEASON_REWARDS	Season rewards	season ladder popup without readable text
+POPUP_TIER_FORMAT	Tier {0}	battle pass tier: 0=tier number
+POPUP_ITEM_COUNT_FORMAT	{0} times {1}	reward: 0=item name 1=count
+POPUP_ITEM_BOOSTER	booster pack	reward item type (fallback)
+POPUP_ITEM_COIN	coin	reward item type (fallback)
+POPUP_ITEM_SLEEVE	card sleeve	reward item type (fallback)
+POPUP_ITEM_DECK_BOX	deck box	reward item type (fallback)
+POPUP_ITEM_DECK	deck	reward item type (fallback)
+POPUP_ITEM_AVATAR	avatar item	reward item type (fallback)
+POPUP_ITEM	item	reward item of unknown type
+POPUP_ITEM_GRANT_HELP	Enter or Backspace: reveal the next reward or card. Up and Down arrows: read a card's details. Right arrow: Collect All button. Left arrow: back to the reward.	F1 on the reward reveal
+POPUP_COLLECT_ALL	Collect all	reward reveal button (fallback, the game's text is used first)
+POPUP_CARDS	cards	reward reveal total: unit after a number
+POPUP_COLLECTED_DONE	Collected. Press Enter: done.	end of the reward reveal without totals
+POPUP_COLLECTED_DONE_FORMAT	Collected. Total collected: {0}. Press Enter: done.	end of the reward reveal: 0=totals like "10 cards, 50 Crystals"
+POPUP_STAT_FORMAT	{0} {1}	reward reveal total: 0=number 1=unit
+POPUP_NEW_CARD_FORMAT	New, {0}	revealed card not owned before: 0=card name
+POPUP_PACK	Pack	booster pack without a name
+POPUP_PACK_FORMAT	{0}, {1} cards	sealed booster pack: 0=pack name 1=card count
+POPUP_RANK_ONE_POINT_GAINED	Plus 1 rank point, {0} total	after a ranked match: 0=new total
+POPUP_RANK_POINTS_GAINED	Plus {0} rank points, {1} total	after a ranked match: 0=points gained 1=new total
