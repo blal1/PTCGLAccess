@@ -1,0 +1,81 @@
+TAG	TEXT	COMMENT
+SOCIAL_PROFILE	Profile	Profile screen title
+SOCIAL_PROFILE_HELP	Up and Down arrows: move, and cross to the section above or below at its edge. Left and Right arrows: move in a row. Tab and Shift+Tab: next or previous section. Enter: activate. Escape: open the menu. N: read and copy your player name.	F1 on the Profile screen
+SOCIAL_FRIENDS	Friends	friends panel title
+SOCIAL_FRIENDS_HELP	Up and Down arrows: move through your friends. Enter: open the options, answer a request or a battle challenge. Escape: close the friends panel. N: read and copy your player name.	F1 in the friends panel
+SOCIAL_ADD_FRIEND	Add friend	friends panel action and add-friend overlay title
+SOCIAL_ADD_FRIEND_HELP	Type your friend's player name. Tab: switch between the name field and the buttons. Arrows: move between the buttons. Enter: press a button. Escape: close. N: read and copy your own player name.	F1 in the add-friend overlay
+SOCIAL_UNKNOWN	Unknown	a friend without a screen name
+SOCIAL_ACCEPT_REQUEST_FORMAT	Accept friend request from {0}	0=friend name
+SOCIAL_DECLINE_REQUEST_FORMAT	Decline friend request from {0}	0=friend name
+SOCIAL_CHALLENGE_FORMAT	{0}, battle challenge	0=friend name; Enter answers the challenge
+SOCIAL_ONLINE_FORMAT	{0}, online	0=friend name
+SOCIAL_OFFLINE_FORMAT	{0}, offline	0=friend name
+SOCIAL_RANK_FORMAT	{0}, rank {1}	0=friend and status 1=prestige level
+SOCIAL_INVITE	A friend challenged you to a battle. Open Friends on the Profile screen to answer.	battle challenge received, sender unknown
+SOCIAL_INVITE_FROM_FORMAT	{0} challenged you to a battle. Open Friends on the Profile screen to answer.	0=friend name
+SOCIAL_REQUEST_SENT	Friend request sent	fallback, the game's text is used first
+SOCIAL_ALREADY_FRIENDS	Already friends, or a request is already pending	fallback
+SOCIAL_FRIEND_LIST_FULL	Your friend list is full	fallback
+SOCIAL_REQUEST_FAILED	Could not send friend request	fallback
+SOCIAL_FRIEND_OPTIONS	Friend options	fallback title of the friend options popup
+SOCIAL_CLOSE	Close	fallback, the game's text is used first
+SOCIAL_OVERLAY_HELP	Arrows: move between the choices. Enter: select. Space: check or uncheck. Escape: close. N: read and copy your player name.	F1 in friend options and battle request
+SOCIAL_BATTLE_REQUEST	Battle request	friendly battle overlay title
+SOCIAL_DECK_FORMAT	Deck {0}	0=deck name
+SOCIAL_DECK_INVALID_FORMAT	Deck {0}, invalid	0=deck name
+SOCIAL_NO_TURN_TIMER	This match has no turn timer	fallback for the game's banner
+SOCIAL_TIMER_ON_FORMAT	{0}, unchecked: normal turn timers	0=toggle label
+SOCIAL_TIMER_OFF_FORMAT	{0}, checked: this match will have no turn timer	0=toggle label
+SOCIAL_MENU_HELP	Up and Down arrows: move. Tab and Shift+Tab: move too. Enter: open. Escape: close the menu.	F1 in the overflow menu
+SOCIAL_PANEL_HELP	The panel text is read when it opens. Up and Down arrows: move between the buttons. Enter: press. Escape: close.	F1 in About / Terms / Privacy
+SOCIAL_ABOUT	About	fallback
+SOCIAL_TERMS_OF_USE	Terms of Use	fallback
+SOCIAL_PRIVACY_NOTICE	Privacy Notice	fallback
+SOCIAL_BACK	Back	fallback, the game's text is used first
+SOCIAL_PERCENT_FORMAT	{0} percent	0=value
+SOCIAL_AVATAR_HELP	Arrows: move through the items. Enter or Space: equip or choose. Up at the top: colors, tabs and the back button. Left and Right on a slider: change it. Escape or Backspace: close the category.	F1 in an avatar category
+SOCIAL_AVATAR_NONE	none	the empty item of a category
+SOCIAL_NUMBERED_FORMAT	{0} {1}	0=category 1=number (Face 3)
+SOCIAL_EQUIPPED	equipped	avatar item or color state
+SOCIAL_OWNED	owned	avatar item state
+SOCIAL_AVAILABLE	available	color swatch state
+SOCIAL_PRICE_FORMAT	{0} {1}	0=price 1=currency
+SOCIAL_AVATAR_COLOR_FORMAT	Color {0}	0=swatch number
+SOCIAL_AVATAR_INTRO	Intro	fallback
+SOCIAL_AVATAR_VICTORY	Victory	fallback
+SOCIAL_AVATAR_FACE	Face	fallback
+SOCIAL_AVATAR_EYES	Eyes	fallback
+SOCIAL_AVATAR_HAIR	Hair	fallback
+SOCIAL_AVATAR_GLASSES	Glasses	fallback
+SOCIAL_AVATAR_HATS	Hats	fallback
+SOCIAL_AVATAR_TOPS	Tops	fallback
+SOCIAL_AVATAR_BOTTOMS	Bottoms	fallback
+SOCIAL_AVATAR_SHOES	Shoes	fallback
+SOCIAL_AVATAR_POSE	Pose	fallback
+SOCIAL_AVATAR_FRAMES	Frames	fallback
+SOCIAL_AVATAR_LENSES	Lenses	fallback
+SOCIAL_AVATAR_SKIN_TONE	Skin tone	color section
+SOCIAL_AVATAR_EYE_COLOR	Eye color	fallback
+SOCIAL_AVATAR_HAIR_COLOR	Hair color	color section
+SOCIAL_AVATAR_COLOR	Color	color section
+SOCIAL_AVATAR_HAIR_TINT	Hair tint	slider
+SOCIAL_AVATAR_LENS_COLOR	Lens color	slider
+SOCIAL_AVATAR_LENS_TRANSPARENCY	Lens transparency	slider
+SOCIAL_AVATAR_FRAMES_COLOR	Frames color	slider
+SETTINGS_TITLE	Settings	fallback
+SETTINGS_HELP	Up and Down arrows: move, and cross sections at their edge. Tab and Shift+Tab: next or previous section. Left and Right arrows: change a value or a tab. Enter: switch a setting or confirm the resolution. Escape: close.	F1 in settings
+SETTINGS_MIGRATE	Account migration	fallback
+SETTINGS_SOUND	Sound	fallback
+SETTINGS_VIDEO	Video	fallback
+SETTINGS_BATTLE	Battle	fallback
+SETTINGS_LANGUAGE	Language	fallback
+SETTINGS_MUSIC	Music	fallback
+SETTINGS_SFX	Sound effects	fallback
+SETTINGS_RESOLUTION	Resolution	fallback
+SETTINGS_WINDOWED	Windowed	fallback
+SETTINGS_CARD_HOVER	Card hover	fallback
+SETTINGS_ON	on	fallback state of a setting
+SETTINGS_OFF	off	fallback state of a setting
+SETTINGS_CURRENT	current	the language in use
+SETTINGS_NOT_SELECTED	not selected	a settings tab

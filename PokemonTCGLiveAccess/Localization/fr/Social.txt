@@ -1,0 +1,81 @@
+TAG	TEXT	COMMENT
+SOCIAL_PROFILE	Profil	Profile screen title
+SOCIAL_PROFILE_HELP	Flèches haut et bas : se déplacer, et passer à la section au-dessus ou en dessous au bord. Flèches gauche et droite : se déplacer dans une rangée. Tab et Maj+Tab : section suivante ou précédente. Entrée : activer. Échap : ouvrir le menu. N : lire et copier votre nom de joueur.	F1 on the Profile screen
+SOCIAL_FRIENDS	Amis	friends panel title
+SOCIAL_FRIENDS_HELP	Flèches haut et bas : parcourir vos amis. Entrée : ouvrir les options, répondre à une demande ou à un défi. Échap : fermer le panneau des amis. N : lire et copier votre nom de joueur.	F1 in the friends panel
+SOCIAL_ADD_FRIEND	Ajouter un ami	friends panel action and add-friend overlay title
+SOCIAL_ADD_FRIEND_HELP	Tapez le nom de joueur de votre ami. Tab : passer du champ de nom aux boutons. Flèches : se déplacer entre les boutons. Entrée : appuyer sur un bouton. Échap : fermer. N : lire et copier votre propre nom de joueur.	F1 in the add-friend overlay
+SOCIAL_UNKNOWN	Inconnu	a friend without a screen name
+SOCIAL_ACCEPT_REQUEST_FORMAT	Accepter la demande d'ami de {0}	0=friend name
+SOCIAL_DECLINE_REQUEST_FORMAT	Refuser la demande d'ami de {0}	0=friend name
+SOCIAL_CHALLENGE_FORMAT	{0}, défi de combat	0=friend name; Enter answers the challenge
+SOCIAL_ONLINE_FORMAT	{0}, en ligne	0=friend name
+SOCIAL_OFFLINE_FORMAT	{0}, hors ligne	0=friend name
+SOCIAL_RANK_FORMAT	{0}, rang {1}	0=friend and status 1=prestige level
+SOCIAL_INVITE	Un ami vous défie en combat. Ouvrez Amis sur l'écran Profil pour répondre.	battle challenge received, sender unknown
+SOCIAL_INVITE_FROM_FORMAT	{0} vous défie en combat. Ouvrez Amis sur l'écran Profil pour répondre.	0=friend name
+SOCIAL_REQUEST_SENT	Demande d'ami envoyée	fallback, the game's text is used first
+SOCIAL_ALREADY_FRIENDS	Déjà amis, ou une demande est déjà en attente	fallback
+SOCIAL_FRIEND_LIST_FULL	Votre liste d'amis est pleine	fallback
+SOCIAL_REQUEST_FAILED	Impossible d'envoyer la demande d'ami	fallback
+SOCIAL_FRIEND_OPTIONS	Options de l'ami	fallback title of the friend options popup
+SOCIAL_CLOSE	Fermer	fallback, the game's text is used first
+SOCIAL_OVERLAY_HELP	Flèches : se déplacer entre les choix. Entrée : sélectionner. Espace : cocher ou décocher. Échap : fermer. N : lire et copier votre nom de joueur.	F1 in friend options and battle request
+SOCIAL_BATTLE_REQUEST	Demande de combat	friendly battle overlay title
+SOCIAL_DECK_FORMAT	Deck {0}	0=deck name
+SOCIAL_DECK_INVALID_FORMAT	Deck {0}, non valide	0=deck name
+SOCIAL_NO_TURN_TIMER	Ce match n'a pas de minuteur de tour	fallback for the game's banner
+SOCIAL_TIMER_ON_FORMAT	{0}, décoché : minuteurs de tour normaux	0=toggle label
+SOCIAL_TIMER_OFF_FORMAT	{0}, coché : ce match n'aura pas de minuteur de tour	0=toggle label
+SOCIAL_MENU_HELP	Flèches haut et bas : se déplacer. Tab et Maj+Tab : se déplacer aussi. Entrée : ouvrir. Échap : fermer le menu.	F1 in the overflow menu
+SOCIAL_PANEL_HELP	Le texte du panneau est lu à l'ouverture. Flèches haut et bas : se déplacer entre les boutons. Entrée : appuyer. Échap : fermer.	F1 in About / Terms / Privacy
+SOCIAL_ABOUT	À propos	fallback
+SOCIAL_TERMS_OF_USE	Conditions d'utilisation	fallback
+SOCIAL_PRIVACY_NOTICE	Avis de confidentialité	fallback
+SOCIAL_BACK	Retour	fallback, the game's text is used first
+SOCIAL_PERCENT_FORMAT	{0} pour cent	0=value
+SOCIAL_AVATAR_HELP	Flèches : parcourir les objets. Entrée ou Espace : équiper ou choisir. Haut tout en haut : couleurs, onglets et bouton retour. Gauche et droite sur un curseur : le régler. Échap ou Retour arrière : fermer la catégorie.	F1 in an avatar category
+SOCIAL_AVATAR_NONE	aucun	the empty item of a category
+SOCIAL_NUMBERED_FORMAT	{0} {1}	0=category 1=number (Face 3)
+SOCIAL_EQUIPPED	équipé	avatar item or color state
+SOCIAL_OWNED	possédé	avatar item state
+SOCIAL_AVAILABLE	disponible	color swatch state
+SOCIAL_PRICE_FORMAT	{0} {1}	0=price 1=currency
+SOCIAL_AVATAR_COLOR_FORMAT	Couleur {0}	0=swatch number
+SOCIAL_AVATAR_INTRO	Intro	fallback
+SOCIAL_AVATAR_VICTORY	Victoire	fallback
+SOCIAL_AVATAR_FACE	Visage	fallback
+SOCIAL_AVATAR_EYES	Yeux	fallback
+SOCIAL_AVATAR_HAIR	Cheveux	fallback
+SOCIAL_AVATAR_GLASSES	Lunettes	fallback
+SOCIAL_AVATAR_HATS	Chapeaux	fallback
+SOCIAL_AVATAR_TOPS	Hauts	fallback
+SOCIAL_AVATAR_BOTTOMS	Bas	fallback
+SOCIAL_AVATAR_SHOES	Chaussures	fallback
+SOCIAL_AVATAR_POSE	Pose	fallback
+SOCIAL_AVATAR_FRAMES	Montures	fallback
+SOCIAL_AVATAR_LENSES	Verres	fallback
+SOCIAL_AVATAR_SKIN_TONE	Teint	color section
+SOCIAL_AVATAR_EYE_COLOR	Couleur des yeux	fallback
+SOCIAL_AVATAR_HAIR_COLOR	Couleur des cheveux	color section
+SOCIAL_AVATAR_COLOR	Couleur	color section
+SOCIAL_AVATAR_HAIR_TINT	Teinte des cheveux	slider
+SOCIAL_AVATAR_LENS_COLOR	Couleur des verres	slider
+SOCIAL_AVATAR_LENS_TRANSPARENCY	Transparence des verres	slider
+SOCIAL_AVATAR_FRAMES_COLOR	Couleur de la monture	slider
+SETTINGS_TITLE	Paramètres	fallback
+SETTINGS_HELP	Flèches haut et bas : se déplacer, et changer de section au bord. Tab et Maj+Tab : section suivante ou précédente. Flèches gauche et droite : changer une valeur ou un onglet. Entrée : basculer un réglage ou confirmer la résolution. Échap : fermer.	F1 in settings
+SETTINGS_MIGRATE	Migration de compte	fallback
+SETTINGS_SOUND	Son	fallback
+SETTINGS_VIDEO	Vidéo	fallback
+SETTINGS_BATTLE	Combat	fallback
+SETTINGS_LANGUAGE	Langue	fallback
+SETTINGS_MUSIC	Musique	fallback
+SETTINGS_SFX	Effets sonores	fallback
+SETTINGS_RESOLUTION	Résolution	fallback
+SETTINGS_WINDOWED	Fenêtré	fallback
+SETTINGS_CARD_HOVER	Survol des cartes	fallback
+SETTINGS_ON	activé	fallback state of a setting
+SETTINGS_OFF	désactivé	fallback state of a setting
+SETTINGS_CURRENT	actuelle	the language in use
+SETTINGS_NOT_SELECTED	non sélectionné	a settings tab
