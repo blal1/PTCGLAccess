@@ -1,0 +1,67 @@
+TAG	TEXT	COMMENT
+HUB_HELP_WITH_GLOBAL_FORMAT	{0} {1}	F1 on a HUB screen: 0=the screen's keys 1=HUB_GLOBAL_KEYS_HELP
+HUB_GLOBAL_KEYS_HELP	Numbers 1 to 9: go to the Nth tab of the top bar. P: read your currencies.	global HUB shortcuts
+HUB_HOME	Home	HOME screen name
+HUB_HOME_HELP	Up and Down arrows: move between sections (top bar, game modes, content, shortcuts). Left and Right arrows: move within a section. Tab and Shift+Tab: next and previous section. Enter: activate; on a game mode, select it and go to its content. Escape: open the menu.	F1 on HOME
+HUB_GAME_MODE	Game mode	HOME: game-mode tab strip
+HUB_NOT_SELECTED	not selected	HOME: a game-mode tab that isn't the active one
+HUB_CASUAL_INFO	Casual mode information	HOME: the info button of the casual format carousel
+HUB_LEARNING_LAB	Learning Lab	LEARN tab lesson list, when the level has no name
+HUB_EMPTY	empty	empty list
+HUB_EMPTY_FORMAT	{0}, empty	0=list name
+HUB_LL_CLASSROOM_FORMAT	{0}, {1}, {2} of {3} lessons	Learning Lab classroom: 0=name 1=difficulty 2=lessons done 3=lessons
+HUB_LL_CLASSROOM_NO_DIFFICULTY_FORMAT	{0}, {1} of {2} lessons	Learning Lab classroom: 0=name 1=lessons done 2=lessons
+HUB_LL_LESSON_COMPLETE	{0}, complete	Learning Lab lesson: 0=name
+HUB_LL_LESSON_NOT_COMPLETE	{0}, not complete	Learning Lab lesson: 0=name
+HUB_DIFFICULTY_BEGINNER	beginner	Learning Lab difficulty
+HUB_DIFFICULTY_NOVICE	novice	Learning Lab difficulty
+HUB_DIFFICULTY_INTERMEDIATE	intermediate	Learning Lab difficulty
+HUB_DIFFICULTY_ADVANCED	advanced	Learning Lab difficulty
+HUB_DIFFICULTY_EXPERT	expert	Learning Lab difficulty
+HUB_DIFFICULTY_MASTER	master	Learning Lab difficulty
+HUB_ITEM	item	an item without a name
+HUB_BNB	Build and Battle	Build and Battle popup without readable text
+HUB_BNB_INSTRUCTIONS	Instructions	Build and Battle tab: the instruction slides
+HUB_PAGE_FORMAT	page {0} of {1}	carousel page: 0=page 1=pages
+HUB_PLAY	Play	Build and Battle buy-in button without readable text
+HUB_BNB_LOBBY	Build and Battle lobby	Build and Battle run lobby screen name
+HUB_BNB_MATCHES_FORMAT	{0} of {1} matches	Build and Battle run progress: 0=played 1=total
+HUB_BNB_LOBBY_HELP	Up and Down arrows: move between the buttons. Enter: activate.	F1 in the Build and Battle lobby
+HUB_INFORMATION	Information	icon-only info button
+HUB_BACK	Back	icon-only back button
+HUB_POPUP_HELP	Arrows: move between the buttons. Enter: activate. Escape: close, when the popup can be closed.	F1 on a Build and Battle popup
+HUB_SEARCHING	Searching for an opponent	matchmaking, when the game shows no text
+HUB_OPPONENT_FOUND	Opponent found, starting match	matchmaking succeeded
+HUB_MATCHMAKING_HELP	Enter or Escape: cancel the search.	F1 while searching for an opponent
+HUB_LEAGUE_TOWER	League tower	League Tower screen name
+HUB_LEAGUE_OPTIONS	League options	League Tower: header buttons
+HUB_SEASON_INFO	Season information	League Tower: icon-only season info button
+HUB_CURRENT_RANK	current rank	League Tower tier status
+HUB_ACHIEVED	achieved	League Tower tier status
+HUB_LOCKED	locked	League Tower tier / Battle Pass tier status
+HUB_LEAGUE_TOWER_HELP	Left and Right arrows: move between ranks. Home and End: first and last rank. Enter: the league's rewards. Up arrow: league options, then the top bar. Tab and Shift+Tab: next and previous section. Escape: back to Home.	F1 on the League Tower
+HUB_BATTLE_PASS_HELP	Up and Down arrows: move between sections (top bar, Battle Pass, daily quests, rewards). Left and Right arrows: move within a section. Tab and Shift+Tab: next and previous section. Enter: collect, replace a quest or claim a reward. Escape: open the menu.	F1 on the Battle Pass
+HUB_DAILY_QUESTS	Daily quests	Battle Pass section
+HUB_REWARDS	Rewards	Battle Pass section
+HUB_QUEST	Quest	daily quest without readable text
+HUB_ENDS_IN_FORMAT	ends in {0}	Battle Pass: 0=time left
+HUB_LEVEL_FORMAT	level {0}	Battle Pass level: 0=level
+HUB_EXPERIENCE_FORMAT	{0} experience	Battle Pass experience: 0=amount or progress
+HUB_FRACTION_FORMAT	{0} of {1}	progress such as 3/10: 0=done 1=goal
+HUB_REWARD_FORMAT	reward {0}	daily quest: 0=rewards
+HUB_AND_FORMAT	{0} and {1}	two rewards
+HUB_TIMES_FORMAT	{0} times {1}	0=item 1=count
+HUB_AMOUNT_FORMAT	{0} {1}	0=amount 1=currency name
+HUB_CLAIMED	claimed	quest or Battle Pass tier state
+HUB_CLAIMED_AVAILABLE_IN_FORMAT	claimed, available in {0}	daily quest: 0=time until the next quest
+HUB_READY_TO_COLLECT	ready to collect	quest or Battle Pass tier state
+HUB_CAN_BE_REPLACED	can be replaced	daily quest that can be rerolled
+HUB_COLLECT_ALL	Collect all rewards	Battle Pass collect all button
+HUB_TIER	Tier	Battle Pass tier without number
+HUB_TIER_FORMAT	Tier {0}	Battle Pass tier: 0=number
+HUB_ITEM_BOOSTER	booster pack	reward item
+HUB_ITEM_COIN	coin	reward item
+HUB_ITEM_SLEEVE	card sleeve	reward item
+HUB_ITEM_DECK_BOX	deck box	reward item
+HUB_ITEM_DECK	deck	reward item
+HUB_ITEM_AVATAR	avatar item	reward item
