@@ -1,0 +1,2 @@
+TAG	TEXT	COMMENT
+LOADING_HELP	Le jeu charge. Chaque nouvelle étape du chargement est lue à voix haute.	F1 on the startup loading screen

@@ -1,0 +1,31 @@
+TAG	TEXT	COMMENT
+GLOBAL_MOD_LOADED	{0} loaded	0=mod name
+GLOBAL_ACCESSIBILITY_ON	Accessibility on	F8
+GLOBAL_ACCESSIBILITY_OFF	Accessibility off	F8
+GLOBAL_PLEASE_WAIT	Loading, please wait.	F1 when nothing has focus yet
+GLOBAL_HELP	F1: help. F8: turn accessibility off or on.	Appended to every F1 help
+GLOBAL_COMPAT_PROBLEMS	Accessibility mod: {0} parts may not work with this game version. Details are in PokemonTCGLiveAccess.log.	0=number of problems
+GLOBAL_CHECKED	checked	checkbox state
+GLOBAL_UNCHECKED	unchecked	checkbox state
+GLOBAL_DISABLED	unavailable	a button that can't be pressed right now
+GLOBAL_SELECTED	selected	the active tab or choice
+
+MENU_OPTION_FORMAT	{0}, {1} of {2}	0=option text 1=position 2=count
+MENU_NO_ITEMS	Nothing here.	empty menu or list
+MENU_HELP	Up and Down arrows: move. Home and End: first and last. Numbers: jump. Enter or Space: select.
+MENU_HELP_WITH_BACK	Up and Down arrows: move. Home and End: first and last. Numbers: jump. Enter or Space: select. Backspace or Escape: go back.
+
+ENERGY_COLORLESS	Colorless	energy type
+ENERGY_FIRE	Fire	energy type
+ENERGY_GRASS	Grass	energy type
+ENERGY_WATER	Water	energy type
+ENERGY_FIGHTING	Fighting	energy type
+ENERGY_FAIRY	Fairy	energy type
+ENERGY_DARKNESS	Darkness	energy type
+ENERGY_LIGHTNING	Lightning	energy type
+ENERGY_DRAGON	Dragon	energy type
+ENERGY_METAL	Metal	energy type
+ENERGY_PSYCHIC	Psychic	energy type
+MARKER_MEGA	Mega	card name marker
+MARKER_PRISM_STAR	Prism Star	card name marker
+MARKER_TAG_TEAM	Tag Team	card name marker

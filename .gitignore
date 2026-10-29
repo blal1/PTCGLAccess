@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+*.user
+# Local link to the game install and the private decompiled game sources: never commit or share these.
+/Game
+/Decompiled/

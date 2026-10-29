@@ -1,0 +1,2 @@
+TAG	TEXT	COMMENT
+LOADING_HELP	The game is loading. Each new loading step is read aloud.	F1 on the startup loading screen

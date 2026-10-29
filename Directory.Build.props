@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <!-- The game folder. Default: the "Game" link created by LinkGameInstallation, else C:\PokemonTCGLive.
+         Override on the command line: dotnet build /p:GameDir="..." (must be an ASCII path for MelonLoader). -->
+    <GameDir Condition="'$(GameDir)' == '' And Exists('$(MSBuildThisFileDirectory)Game')">$(MSBuildThisFileDirectory)Game</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">C:\PokemonTCGLive</GameDir>
+    <GameManagedDir>$(GameDir)\Pokemon TCG Live_Data\Managed</GameManagedDir>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+</Project>

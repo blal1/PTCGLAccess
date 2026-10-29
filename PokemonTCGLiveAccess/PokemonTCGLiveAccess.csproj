@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>PokemonTCGLiveAccess</AssemblyName>
+    <RootNamespace>Accessibility</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <!-- Spoken text, one tab-separated file per feature and language (Localization/<game language tag>/<Feature>.txt). -->
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\**\*.txt" LogicalName="Localization/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.0" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.6" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Game and engine assemblies, compiled against but never copied. -->
+  <ItemGroup>
+    <GameAssembly Include="UnityEngine;UnityEngine.CoreModule;UnityEngine.UI;UnityEngine.UIModule;UnityEngine.InputLegacyModule;Unity.InputSystem;UnityEngine.InputModule;UnityEngine.IMGUIModule;UnityEngine.TextRenderingModule;UnityEngine.AnimationModule;Unity.TextMeshPro" />
+    <GameAssembly Include="Assembly-CSharp;Assembly-CSharp-firstpass;MatchLogic;CardDatabase.DataAccess;RainierClientSDK;TPCI.RainierClient;TPCI.Shared.Singletons;TPCILocalization;TPCILocalizationAPI;TPCI.Localization.Api;TPCI.Localization.Impl;TPCIEventDispatch;TPCIEventDispatchAPI;TPCIAnywhereCoroutine;SharedLogicUtils;RainierItems;ClientNetworking;EnhancedScrollerV2" />
+    <Reference Include="@(GameAssembly)" HintPath="$(GameManagedDir)\%(Identity).dll" Private="false" />
+  </ItemGroup>
+
+  <!-- Like Hearthstone Access' build: every build installs itself into the linked game. -->
+  <!-- Never next to the previous mod (Mods\PokemonTCGLiveAccessibility.dll): both would speak over each other. -->
+  <PropertyGroup>
+    <PreviousModInstalled>false</PreviousModInstalled>
+    <PreviousModInstalled Condition="Exists('$(GameDir)\Mods\PokemonTCGLiveAccessibility.dll')">true</PreviousModInstalled>
+  </PropertyGroup>
+  <Target Name="DeployToGame" AfterTargets="Build" Condition="Exists('$(GameDir)\Mods')">
+    <Copy Condition="!$(PreviousModInstalled)" SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)\Mods" SkipUnchangedFiles="true" />
+    <Message Condition="!$(PreviousModInstalled)" Importance="high" Text="Deployed $(TargetFileName) to $(GameDir)\Mods" />
+    <Warning Condition="$(PreviousModInstalled)" Text="Not deployed: the previous mod Mods\PokemonTCGLiveAccessibility.dll is installed. Move it out of Mods to test this one." />
+  </Target>
+
+</Project>

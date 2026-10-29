@@ -1,0 +1,31 @@
+TAG	TEXT	COMMENT
+GLOBAL_MOD_LOADED	{0} chargé	0=mod name
+GLOBAL_ACCESSIBILITY_ON	Accessibilité activée	F8
+GLOBAL_ACCESSIBILITY_OFF	Accessibilité désactivée	F8
+GLOBAL_PLEASE_WAIT	Chargement, veuillez patienter.	F1 when nothing has focus yet
+GLOBAL_HELP	F1 : aide. F8 : désactiver ou réactiver l'accessibilité.	Appended to every F1 help
+GLOBAL_COMPAT_PROBLEMS	Mod d'accessibilité : {0} parties risquent de ne pas fonctionner avec cette version du jeu. Les détails sont dans PokemonTCGLiveAccess.log.	0=number of problems
+GLOBAL_CHECKED	coché	checkbox state
+GLOBAL_UNCHECKED	non coché	checkbox state
+GLOBAL_DISABLED	indisponible	a button that can't be pressed right now
+GLOBAL_SELECTED	sélectionné	the active tab or choice
+
+MENU_OPTION_FORMAT	{0}, {1} sur {2}	0=option text 1=position 2=count
+MENU_NO_ITEMS	Rien ici.	empty menu or list
+MENU_HELP	Flèches haut et bas : se déplacer. Début et Fin : premier et dernier. Chiffres : aller directement. Entrée ou Espace : sélectionner.
+MENU_HELP_WITH_BACK	Flèches haut et bas : se déplacer. Début et Fin : premier et dernier. Chiffres : aller directement. Entrée ou Espace : sélectionner. Retour arrière ou Échap : revenir.
+
+ENERGY_COLORLESS	Incolore	energy type
+ENERGY_FIRE	Feu	energy type
+ENERGY_GRASS	Plante	energy type
+ENERGY_WATER	Eau	energy type
+ENERGY_FIGHTING	Combat	energy type
+ENERGY_FAIRY	Fée	energy type
+ENERGY_DARKNESS	Obscurité	energy type
+ENERGY_LIGHTNING	Électrique	energy type
+ENERGY_DRAGON	Dragon	energy type
+ENERGY_METAL	Métal	energy type
+ENERGY_PSYCHIC	Psy	energy type
+MARKER_MEGA	Méga	card name marker
+MARKER_PRISM_STAR	Étoile Prisme	card name marker
+MARKER_TAG_TEAM	Escouade	card name marker
