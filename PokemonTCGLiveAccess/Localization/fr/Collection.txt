@@ -1,0 +1,82 @@
+TAG	TEXT	COMMENT
+COLLECTION_NOT_SELECTED	non sélectionné	tab state
+COLLECTION_AND	{0} et {1}	list joining: 0=first items 1=last item
+COLLECTION_TITLE_BODY	{0}. {1}	popup: 0=title 1=body
+COLLECTION_POPUP_HELP	Flèches haut et bas : parcourir le texte et les boutons de la fenêtre. Entrée : activer. Échap : fermer.	F1 in deck stats, deck validation and exchange-all popups
+COLLECTION_MENU_POPUP_HELP	Flèches haut et bas : parcourir les options. Entrée : activer. Échap : fermer le menu.	F1 in the deck options menu
+COLLECTION_DECK_STATS	Statistiques du deck	popup title fallback
+COLLECTION_STATS_WINS	Victoires : {0}	0=number
+COLLECTION_STATS_LOSSES	Défaites : {0}	0=number
+COLLECTION_STATS_RATIO	Taux de victoire : {0}	0=ratio as shown by the game
+COLLECTION_DECK_VALIDATION	Validation du deck	popup title fallback
+COLLECTION_EXCHANGE_CARDS	Échanger des cartes	exchange-all popup title fallback
+COLLECTION_COST	coût {0}	0=amount and currency
+COLLECTION_DECK_NAME_HELP	Saisissez le nom du deck. Tab : passer du champ aux boutons. Entrée : valider. Échap : annuler.	F1 in the rename popup
+COLLECTION_DECK_RENAMED	Deck renommé en {0}	0=new name
+COLLECTION_EXCHANGE	Échanger	card exchange (crafting) button/popup
+COLLECTION_CRAFT_HELP	Flèches gauche et droite, ou plus et moins : changer le nombre d'exemplaires. Entrée : confirmer l'échange. Échap : annuler.	F1 in the exchange quantity popup
+COLLECTION_MAXIMUM	Maximum	quantity stepper at its limit
+COLLECTION_MINIMUM	Minimum	quantity stepper at its limit
+COLLECTION_EXCHANGING	Échange en cours	after Enter in the exchange popup
+COLLECTION_ONE_CARD	1 carte	count
+COLLECTION_CARDS	{0} cartes	0=count
+COLLECTION_CARD_DETAIL_HELP	Flèches haut et bas : parcourir les sections carte, nombre dans le deck, échange, versions et détails ; dans les détails, lire ligne par ligne. Flèches gauche et droite : changer la valeur ou la version. Plus et moins : ajouter ou retirer un exemplaire du deck. Entrée : activer. Échap : fermer.	F1 in the deck editor card detail
+COLLECTION_CARD_DETAILS	Détails de la carte	overlay title
+COLLECTION_EXCHANGED	Échangée	exchange succeeded
+COLLECTION_VERSIONS	Versions	card detail section: rarity versions
+COLLECTION_DETAILS	Détails	card detail section: printed text
+COLLECTION_CANNOT_EXCHANGE	Ne peut pas être échangée	card detail
+COLLECTION_IN_DECK	{0} dans le deck	0=copies in the deck
+COLLECTION_OWNED_OTHER_VERSIONS	{0} possédées dans d'autres versions	0=copies
+COLLECTION_EXCHANGEABLE	échangeable	card state
+COLLECTION_CANT_ADD_MORE	Impossible d'en ajouter plus	plus key at the limit
+COLLECTION_NONE_IN_DECK	Aucune dans le deck	minus key with no copy
+COLLECTION_ADDED_COUNT	Ajoutée, {0} dans le deck	0=copies now in deck
+COLLECTION_REMOVED_COUNT	Retirée, {0} dans le deck	0=copies now in deck
+COLLECTION_NO_VERSIONS	Aucune autre version	card detail
+COLLECTION_VERSION_N	Version {0}	0=index
+COLLECTION_OWNED_IN_DECK	{0} possédées, {1} dans le deck	0=owned 1=in deck
+COLLECTION_CARD_DEX_DETAIL_HELP	Flèches haut et bas : parcourir les sections carte, échange et détails ; dans les détails, lire ligne par ligne. Flèches gauche et droite sur la carte : carte précédente ou suivante. Entrée : activer. Échap : fermer.	F1 in the Card Dex card detail
+COLLECTION_DECKS_HELP	Tab et Maj+Tab : passer de la barre du haut aux onglets, à la liste des decks et au panneau du deck choisi. Flèches : se déplacer dans une section. Entrée : ouvrir ou activer. Échap : retour.	F1 on the Decks screen
+COLLECTION_DECKS	Decks	screen name fallback
+COLLECTION_DECK_GROUPING	Groupes de decks	tab group name
+COLLECTION_CREATE_DECK	Créer un deck	fallback for the create-deck tile
+COLLECTION_VALID	valide	deck validity
+COLLECTION_INVALID	non valide	deck validity
+COLLECTION_ACTIVE_FOR	actif pour {0}	0=game modes
+COLLECTION_ACTIVE	actif	deck state
+COLLECTION_RETURN_TO_CHALLENGE	Retourner au défi	friend challenge return button
+COLLECTION_SET_ACTIVE	Définir comme deck actif	button fallback
+COLLECTION_EDIT_DECK_HELP	Tab et Maj+Tab : passer de la barre du haut aux catégories, au deck et à la bibliothèque de cartes. Flèches gauche et droite : changer de carte ; haut et bas : lire la carte ligne par ligne. Entrée : prendre une carte ; Tab vers l'autre liste puis Entrée pour la poser : de la bibliothèque au deck l'ajoute, du deck à la bibliothèque la retire. I : détails de la carte. Échap : annuler la carte prise ou quitter l'éditeur.	F1 in the deck editor
+COLLECTION_CATEGORY	Catégorie	deck editor tabs group
+COLLECTION_EXCHANGE_ALL_UNOWNED	Échanger toutes les cartes non possédées	fallback label
+COLLECTION_EMPTY	{0}, vide	0=section name
+COLLECTION_LOADING	{0}, chargement	0=section name
+COLLECTION_CARD_LIBRARY	Bibliothèque de cartes	fallback section name
+COLLECTION_DECK	Deck	fallback section name
+COLLECTION_NOT_ENOUGH_OWNED	vous n'en possédez pas assez	deck uses more copies than owned
+COLLECTION_NOT_ENOUGH_OF_VERSION	vous n'en possédez pas assez d'une des versions	per-rarity shortfall
+COLLECTION_CANT_PICK_UP	Impossible de prendre {0}	0=card name
+COLLECTION_HOLDING	{0} en main. Tab vers l'autre liste et Entrée pour la poser, Échap pour annuler.	0=card name
+COLLECTION_TAB_TO_DECK	Tab vers le deck pour ajouter {0}	0=card name
+COLLECTION_TAB_TO_LIBRARY	Tab vers la bibliothèque pour retirer {0}	0=card name
+COLLECTION_CANT_ADD	Impossible d'ajouter {0}{1}	0=card name 1=empty or COLLECTION_DECK_FULL
+COLLECTION_COULDNT_ADD	{0} n'a pas pu être ajoutée{1}	tutorial drop: 0=card name 1=empty or COLLECTION_DECK_FULL
+COLLECTION_DECK_FULL	, le deck est complet	appended to COLLECTION_CANT_ADD
+COLLECTION_ADDED	{0} ajoutée, {1} dans le deck	0=card name 1=copies
+COLLECTION_REMOVED	{0} retirée, {1} dans le deck	0=card name 1=copies
+COLLECTION_HOLD_CANCELLED	{0} reposée	0=card name
+COLLECTION_PLACE_FIRST	Posez ou annulez d'abord la carte prise	I while holding
+COLLECTION_CANT_OPEN_DETAILS	Impossible d'ouvrir les détails de la carte	inspect failed
+COLLECTION_DECK_EDITOR	Éditeur de deck	screen name
+COLLECTION_EDITOR_INTRO_VALID	Éditeur de deck. {0}. {1} cartes sur {2}, valide	0=deck name 1=size 2=max
+COLLECTION_EDITOR_INTRO_INVALID	Éditeur de deck. {0}. {1} cartes sur {2}, non valide	0=deck name 1=size 2=max
+COLLECTION_FILTER	Filtrer	popup name
+COLLECTION_SORT_BY	Trier par	popup name
+COLLECTION_FTUE_THIS_CARD	Tutoriel : {0} cette carte	0=COLLECTION_FTUE_ADD etc.
+COLLECTION_FTUE_CARD	Tutoriel : {0} {1}	0=verb 1=card name
+COLLECTION_FTUE_USE	Tutoriel : {0}, appuyez sur Entrée	0=control label
+COLLECTION_FTUE_ADD	ajouter	tutorial verb
+COLLECTION_FTUE_REMOVE	retirer	tutorial verb
+COLLECTION_FTUE_OPEN	ouvrir	tutorial verb
+COLLECTION_FTUE_SELECT	sélectionner	tutorial verb
