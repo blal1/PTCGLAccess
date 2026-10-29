@@ -1,0 +1,178 @@
+TAG	TEXT	COMMENT
+BATTLE_ZONE_MY_ACTIVE	your active	zone name
+BATTLE_ZONE_MY_BENCH	your bench	zone name
+BATTLE_ZONE_MY_HAND	your hand	zone name
+BATTLE_ZONE_MY_DISCARD	your discard pile	zone name
+BATTLE_ZONE_MY_DECK	your deck	zone name
+BATTLE_ZONE_MY_PRIZES	your prizes	zone name
+BATTLE_ZONE_MY_LOST_ZONE	your lost zone	zone name
+BATTLE_ZONE_OPP_ACTIVE	opponent's active	zone name
+BATTLE_ZONE_OPP_BENCH	opponent's bench	zone name
+BATTLE_ZONE_OPP_HAND	opponent's hand	zone name
+BATTLE_ZONE_OPP_DISCARD	opponent's discard pile	zone name
+BATTLE_ZONE_OPP_DECK	opponent's deck	zone name
+BATTLE_ZONE_OPP_PRIZES	opponent's prizes	zone name
+BATTLE_ZONE_STADIUM	stadium	zone name
+BATTLE_ZONE_AND_CARD	{0}. {1}	0=zone 1=card with its position
+BATTLE_ZONE_ONE_CARD	{0}, 1 card	count-only zone: 0=zone
+BATTLE_ZONE_CARDS	{0}, {1} cards	count-only zone: 0=zone 1=count
+BATTLE_ZONE_EMPTY	{0}, empty	0=zone
+BATTLE_COPIES	{0}, {1} copies	a pile of identical hand cards: 0=card 1=count
+BATTLE_EMPTY	empty	an empty board slot
+BATTLE_FACE_DOWN	face-down card	a hidden card
+BATTLE_FACE_DOWN_NO_DETAILS	Face-down card, no details	reading a hidden card
+BATTLE_HP_SUMMARY	{0}, {1} of {2} hit points	0=Pokémon 1=remaining HP 2=max HP
+BATTLE_HP	{0} of {1} hit points	0=remaining HP 1=max HP
+BATTLE_NO_ENERGY	No energy attached	card detail line
+BATTLE_ENERGY_LIST	Energy: {0}	card detail line: 0=attached energy
+BATTLE_TOOL_LIST	Tools: {0}	card detail line: 0=attached tools
+BATTLE_STATUS_LIST	Status: {0}	card detail line: 0=special conditions
+BATTLE_EVOLVED_FROM	Evolved from {0}	card detail line: 0=previous stage
+BATTLE_CARD_ITEM	Item	trainer card kind
+BATTLE_CARD_SUPPORTER	Supporter	trainer card kind
+BATTLE_CARD_STADIUM	Stadium	trainer card kind
+BATTLE_CARD_TOOL	Pokémon Tool	trainer card kind
+BATTLE_END_OF_CARD	End of card	Shift+Down past the last line
+BATTLE_NOTHING_FOCUSED	Nothing focused	reading with no card focused
+BATTLE_NO_CARDS_HERE	No cards here	number key in an empty zone
+BATTLE_NO_CARD_THERE	No card there	number key past the end
+BATTLE_NAME	Battle	status fallback when no phase is known
+BATTLE_STARTED	Battle started	first focus of the battle
+BATTLE_STARTED_PHASE	Battle started. {0}	first focus: 0=phase
+BATTLE_ENDED	Battle ended	end of the match
+BATTLE_PHASE_SETUP	Setup phase	phase
+BATTLE_PHASE_YOUR_TURN	Your turn	phase
+BATTLE_PHASE_OPPONENT_TURN	Opponent's turn	phase
+BATTLE_COIN_HEADS	Coin flip: Heads	coin flip result
+BATTLE_COIN_TAILS	Coin flip: Tails	coin flip result
+BATTLE_DREW_CARD	Drew a card	a card was added to your hand
+BATTLE_DREW_NAMED	Drew {0}	0=card name
+BATTLE_SENTENCES	{0}. {1}	two sentences joined
+BATTLE_STATUS_PRIZES	You have {0} prizes left, opponent {1}	T key: 0=yours 1=opponent's
+BATTLE_STATUS_MY_ACTIVE	Your active: {0}	T key: 0=short summary
+BATTLE_STATUS_OPP_ACTIVE	Opponent's active: {0}	T key: 0=short summary
+BATTLE_NOT_YOUR_TURN	Not your turn	E key
+BATTLE_FINISH_SELECTION_FIRST	Finish the current selection first	a selection is pending
+BATTLE_CANT_END_TURN	You can't end your turn right now	E key refused by the game
+BATTLE_DONE	Done	the Done button / option
+BATTLE_DONE_UNAVAILABLE	Done, unavailable	Done greyed out by the game
+BATTLE_CANT_CONFIRM	Can't confirm right now	no Done button
+BATTLE_CARD_VIEW	Card view, {0}	I key: 0=card
+BATTLE_CARD_VIEW_CLOSED	Closed card view	viewer closed
+BATTLE_CANT_INSPECT	Can't inspect this card right now	I key refused
+BATTLE_NOTHING_TO_ACT_ON	Nothing to act on	Enter with no card
+BATTLE_NO_ACTIONS	No actions for {0}	0=card
+BATTLE_ACTIONS_FOR	Actions for {0}.	action menu opened: 0=card
+BATTLE_ATTACK	Attack	unnamed attack option
+BATTLE_USE_ABILITY	Use ability	unnamed ability option
+BATTLE_ATTACK_NAMED	Attack: {0}	0=attack name
+BATTLE_ABILITY_NAMED	Use ability: {0}	0=ability name
+BATTLE_RETREAT	Retreat	retreat option
+BATTLE_FIRST_ACTION	First action	top of the action menu
+BATTLE_LAST_ACTION	Last action	bottom of the action menu
+BATTLE_NOT_USABLE_NOW	Not usable now	greyed option
+BATTLE_TUTORIAL_FIRST	{0} first	0=what the tutorial wants
+BATTLE_TUTORIAL_NOT_READY	The tutorial isn't ready for that yet	card refused by the tutorial
+BATTLE_TUTORIAL_BEFORE_END_TURN	{0}. Do that before ending your turn	0=what the tutorial wants
+BATTLE_TUTORIAL_WANTS	Tutorial wants {0}	0=card
+BATTLE_TUTORIAL_WANTS_IN	Tutorial wants {0}, in {1}	0=card 1=zone
+BATTLE_CANT_PLAY_THIS	Can't play this	no card info
+BATTLE_CANT_PLAY_RIGHT_NOW	You can't play {0} right now	0=card
+BATTLE_CANT_PLAY_NOW	Can't play {0} now	0=card
+BATTLE_USE_CARD_QUESTION	Use {0}?	no-target card confirmation: 0=card
+BATTLE_HOLDING	Holding {0}	card picked up: 0=card
+BATTLE_NOT_A_VALID_SPOT	Not a valid spot for this card	drop refused
+BATTLE_CANCELLED	Cancelled	pickup cancelled
+BATTLE_CANCELLED_CARD	Cancelled {0}	pickup cancelled: 0=card
+BATTLE_NO_ENERGY_TO_ATTACH	No energy left to attach	attach distribution
+BATTLE_ATTACH_ENERGY_ZONE	Energy to attach, {0} available. {1}	0=count 1=first card
+BATTLE_SELECT_HAND_ENERGY	Select an energy from your hand	attach distribution
+BATTLE_CANT_ATTACH	Can't attach {0}	0=energy
+BATTLE_NO_ENERGY_TO_MOVE_ON	{0} has no energy to move	0=Pokémon
+BATTLE_CHOOSE_MOVE_SOURCE	Choose a Pokémon to move energy from	move energy
+BATTLE_CANT_MOVE_ENERGY_FROM	Can't move energy from {0} right now	0=Pokémon
+BATTLE_NO_ENERGY_TO_MOVE_FROM	No energy to move from {0}	0=Pokémon
+BATTLE_FROM_SOURCE	from {0}	0=Pokémon the energy came from
+BATTLE_CAN_RECEIVE_ENERGY	can receive energy	move energy target tag
+BATTLE_HAS_ENERGY_TO_MOVE	has energy to move	move energy source tag
+BATTLE_HELP	A, B, C: your active, bench, hand. X, D, P: your discard pile, deck, prizes. Shift with these: the opponent's. S: stadium. Left and Right: cards. Down and Up: read the card line by line. Shift+Down: read to the end. Home, End, numbers: jump to a card. Enter: act on the card. I: look at the card. T: status. E: end your turn. Tab: the Done button when there is one. Escape: battle menu.	F1 on the board
+BATTLE_HELP_HOLDING	You are holding a card. Move to where it goes with A, B, S and the arrows, then press Enter to drop it. Backspace: cancel.	F1 while holding a card
+BATTLE_HELP_ACTION_MENU	Up and Down: actions. Enter: use the action. Backspace or Escape: back to the board.	F1 in the action menu
+BATTLE_HELP_CARD_VIEW	Down and Up: read the card line by line. Backspace, Escape or I: close the card.	F1 in the card view
+BATTLE_HELP_CONFIRM_PLAY	Enter: play the card. Backspace or Escape: cancel.	F1 on the "Use X?" question
+BATTLE_PROMPT_HELP	Left and Right: choices. Down and Up: read the card line by line. Enter: choose. Numbers: jump to a choice. Tab: the Done choice.	F1 on a battle choice
+BATTLE_PROMPT_NEXT_COUNTER	Ready for the next counter	repeatable damage effect
+BATTLE_PROMPT_NO_VALID_CARDS	There are no valid cards to choose	fallback for the game's own message
+BATTLE_PROMPT_CHOICE_REQUIRED	A choice is required	unsupported prompt with no question
+BATTLE_PROMPT_UNSUPPORTED	{0}. This selection isn't supported yet.	0=question
+BATTLE_PROMPT_PRIZE_CARD	Prize card	a face-down prize option
+BATTLE_PROMPT_TAKE_PRIZE	Take a prize card	fallback question
+BATTLE_PROMPT_TAKE_PRIZES	Take {0} prize cards	fallback question: 0=count
+BATTLE_PROMPT_PRIZE_FAILED	Couldn't take that prize	prize pick failed
+BATTLE_PROMPT_PRIZE_SELECTED_MORE	Prize selected, {0} of {1}; choose {2} more	0=chosen 1=total 2=left
+BATTLE_PROMPT_PRIZE_SELECTED	Prize selected, {0} of {1}	0=chosen 1=total
+BATTLE_PROMPT_PRIZE_DESELECTED	Prize deselected, {0} selected	0=chosen
+BATTLE_PROMPT_PRIZE_MAX	Already taken the maximum	prize pick over the max
+BATTLE_PROMPT_CHOOSE_AT_LEAST	Choose at least {0}; you have {1}	0=minimum 1=chosen
+BATTLE_PROMPT_TOO_MANY	Too many selected	submit over the max
+BATTLE_PROMPT_CHOOSE_CARD	Choose a card	fallback question
+BATTLE_PROMPT_CHOOSE_CARDS	Choose {0} cards	fallback question: 0=count
+BATTLE_PROMPT_CHOOSE_UP_TO_CARDS	Choose up to {0} cards	fallback question: 0=count
+BATTLE_PROMPT_SELECT_FAILED	Couldn't select that card	pick failed
+BATTLE_PROMPT_CHANGE_FAILED	Couldn't change that selection	pick did nothing
+BATTLE_PROMPT_SELECTED_COUNT	Selected {0}, {1} of {2} chosen	0=card 1=chosen 2=total
+BATTLE_PROMPT_DESELECTED_COUNT	Deselected {0}, {1} chosen	0=card 1=chosen
+BATTLE_PROMPT_ENERGY_SELECT_FAILED	Couldn't select that energy	deferred energy pick timed out
+BATTLE_PROMPT_NO_MORE	No more {0} to choose, {1} of {2} chosen	0=card 1=chosen 2=total
+BATTLE_PROMPT_CHOOSE_POKEMON	Choose a Pokémon	fallback question
+BATTLE_PROMPT_CHOOSE_POKEMONS	Choose {0} Pokémon	fallback question: 0=count
+BATTLE_PROMPT_POKEMON_FAILED	Couldn't select that Pokémon	board pick failed
+BATTLE_PROMPT_SELECTED_MORE	Selected, {0} of {1}; choose {2} more	0=chosen 1=total 2=left
+BATTLE_PROMPT_CHOOSE_ATTACK	Choose an attack	fallback question
+BATTLE_PROMPT_CHOOSE_SWITCH	Choose a Pokémon to switch to the Active spot	fallback question
+BATTLE_PROMPT_SWITCH_FAILED	Couldn't switch to that Pokémon	switch failed
+BATTLE_PROMPT_MOVE_DAMAGE	Move damage counters from one Pokémon to another	fallback question
+BATTLE_PROMPT_PUT_COUNTER	Put 1 damage counter on your opponent's Pokémon	fallback question
+BATTLE_PROMPT_PUT_COUNTERS	Put {0} damage counters on your opponent's Pokémon	fallback question: 0=count
+BATTLE_PROMPT_MOVE_FROM	Move damage from {0}	source option: 0=Pokémon
+BATTLE_PROMPT_MOVE_FROM_TO_WHICH	Move damage from {0} to which Pokémon?	0=source Pokémon
+BATTLE_PROMPT_MOVE_TO	Move damage to {0}	target option: 0=Pokémon
+BATTLE_PROMPT_PUT_ON	Put damage on {0}	target option: 0=Pokémon
+BATTLE_PROMPT_BACK	Back	switch damage source
+BATTLE_PROMPT_WAITING	Waiting for the game	server has not answered yet
+BATTLE_PROMPT_LIFT_FAILED	Couldn't lift damage from that Pokémon	source distribution failed
+BATTLE_PROMPT_CANT_PUT_THERE	Can't put damage there	target not a receiver
+BATTLE_PROMPT_NO_COUNTER	No damage counter to move	empty tray
+BATTLE_PROMPT_CANT_MOVE_COUNTER	Can't move that counter now	counter not targetable
+BATTLE_PROMPT_HAS_DAMAGE	{0} has {1} damage.	after a drop: 0=Pokémon 1=total damage
+BATTLE_PROMPT_MOVED_DAMAGE_TO	Moved damage to {0}.	after a drop: 0=Pokémon
+BATTLE_PROMPT_PLACE_FAILED	Couldn't place the counter there	drop refused
+BATTLE_PROMPT_STILL_PLACING	Still placing the counter	Done during a drop
+BATTLE_PROMPT_NOT_ENOUGH_DAMAGE	You haven't moved enough damage yet	Done under the minimum
+BATTLE_PROMPT_PILE	{0}, {1} available	collapsed pile: 0=card 1=left
+BATTLE_PROMPT_PILE_SELECTED	{0}, {1} available, {2} selected	collapsed pile: 0=card 1=left 2=chosen
+BATTLE_PROMPT_LAST_LINE	Last line	Down past the last card line
+BATTLE_MENU	Battle menu	the gear panel
+BATTLE_MENU_UNAVAILABLE	Battle menu unavailable	panel not found
+BATTLE_MENU_NO_OPTIONS	No options	empty panel
+BATTLE_MENU_PERCENT	{0}, {1} percent	slider: 0=label 1=value
+BATTLE_MENU_HELP	Up and Down: options. Left and Right: change a slider or a list. Enter: press. Escape or Backspace: close the menu.	F1 in the battle menu
+BATTLE_RESULT_WON	You won.	outcome
+BATTLE_RESULT_LOST	You lost.	outcome
+BATTLE_RESULT_PLAYER_STATS	{0}: {1}	0=player 1=stats
+BATTLE_RESULT_XP	Experience	reward tile
+BATTLE_RESULT_PASS_XP	Battle Pass experience	reward tile
+BATTLE_RESULT_RANK_POINTS	Rank points	reward tile
+BATTLE_RESULT_ITEM_TIMES	{0} times {1}	0=item 1=count
+BATTLE_RESULT_REWARDS	Match rewards	fallback for the game's own header
+BATTLE_RESULT_HELP	Enter or Space: continue. On the stats page, Up and Down: buttons, Enter: press.	F1 on the result screen
+BATTLE_INTRO_OPPONENT	Opponent	unnamed opponent
+BATTLE_INTRO_VERSUS	Versus {0}	0=opponent
+BATTLE_INTRO_VERSUS_RANK	Versus {0}, {1}	0=opponent 1=rank
+BATTLE_INTRO_YOU_RANK	You, {0}	0=your rank
+BATTLE_MULLIGANS	Mulligans	popup title
+BATTLE_MULLIGAN_A_PLAYER	A player	unnamed player
+BATTLE_MULLIGAN_ONE	{0} had to take 1 mulligan before drawing a Basic Pokémon.	0=player
+BATTLE_MULLIGAN_MANY	{0} had to take {1} mulligans before drawing a Basic Pokémon.	0=player 1=count
+BATTLE_MULLIGAN_HIDDEN	cards hidden	no revealed names
+BATTLE_MULLIGAN_NTH	Mulligan {0}: {1}	0=number 1=cards

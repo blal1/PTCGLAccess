@@ -1,0 +1,178 @@
+TAG	TEXT	COMMENT
+BATTLE_ZONE_MY_ACTIVE	votre Pokémon Actif	zone name
+BATTLE_ZONE_MY_BENCH	votre Banc	zone name
+BATTLE_ZONE_MY_HAND	votre main	zone name
+BATTLE_ZONE_MY_DISCARD	votre pile de défausse	zone name
+BATTLE_ZONE_MY_DECK	votre deck	zone name
+BATTLE_ZONE_MY_PRIZES	vos cartes Récompense	zone name
+BATTLE_ZONE_MY_LOST_ZONE	votre zone Perdue	zone name
+BATTLE_ZONE_OPP_ACTIVE	Pokémon Actif adverse	zone name
+BATTLE_ZONE_OPP_BENCH	Banc adverse	zone name
+BATTLE_ZONE_OPP_HAND	main adverse	zone name
+BATTLE_ZONE_OPP_DISCARD	pile de défausse adverse	zone name
+BATTLE_ZONE_OPP_DECK	deck adverse	zone name
+BATTLE_ZONE_OPP_PRIZES	cartes Récompense adverses	zone name
+BATTLE_ZONE_STADIUM	Stade	zone name
+BATTLE_ZONE_AND_CARD	{0}. {1}	0=zone 1=card with its position
+BATTLE_ZONE_ONE_CARD	{0}, 1 carte	count-only zone: 0=zone
+BATTLE_ZONE_CARDS	{0}, {1} cartes	count-only zone: 0=zone 1=count
+BATTLE_ZONE_EMPTY	{0}, vide	0=zone
+BATTLE_COPIES	{0}, {1} exemplaires	a pile of identical hand cards: 0=card 1=count
+BATTLE_EMPTY	vide	an empty board slot
+BATTLE_FACE_DOWN	carte face cachée	a hidden card
+BATTLE_FACE_DOWN_NO_DETAILS	Carte face cachée, aucun détail	reading a hidden card
+BATTLE_HP_SUMMARY	{0}, {1} PV sur {2}	0=Pokémon 1=remaining HP 2=max HP
+BATTLE_HP	{0} PV sur {1}	0=remaining HP 1=max HP
+BATTLE_NO_ENERGY	Aucune Énergie attachée	card detail line
+BATTLE_ENERGY_LIST	Énergie : {0}	card detail line: 0=attached energy
+BATTLE_TOOL_LIST	Outils : {0}	card detail line: 0=attached tools
+BATTLE_STATUS_LIST	État : {0}	card detail line: 0=special conditions
+BATTLE_EVOLVED_FROM	Évolué depuis {0}	card detail line: 0=previous stage
+BATTLE_CARD_ITEM	Objet	trainer card kind
+BATTLE_CARD_SUPPORTER	Supporter	trainer card kind
+BATTLE_CARD_STADIUM	Stade	trainer card kind
+BATTLE_CARD_TOOL	Outil Pokémon	trainer card kind
+BATTLE_END_OF_CARD	Fin de la carte	Shift+Down past the last line
+BATTLE_NOTHING_FOCUSED	Rien de sélectionné	reading with no card focused
+BATTLE_NO_CARDS_HERE	Aucune carte ici	number key in an empty zone
+BATTLE_NO_CARD_THERE	Pas de carte à cette position	number key past the end
+BATTLE_NAME	Combat	status fallback when no phase is known
+BATTLE_STARTED	Combat commencé	first focus of the battle
+BATTLE_STARTED_PHASE	Combat commencé. {0}	first focus: 0=phase
+BATTLE_ENDED	Combat terminé	end of the match
+BATTLE_PHASE_SETUP	Phase de mise en place	phase
+BATTLE_PHASE_YOUR_TURN	Votre tour	phase
+BATTLE_PHASE_OPPONENT_TURN	Tour de l'adversaire	phase
+BATTLE_COIN_HEADS	Pile ou face : face	coin flip result
+BATTLE_COIN_TAILS	Pile ou face : pile	coin flip result
+BATTLE_DREW_CARD	Carte piochée	a card was added to your hand
+BATTLE_DREW_NAMED	Pioché : {0}	0=card name
+BATTLE_SENTENCES	{0}. {1}	two sentences joined
+BATTLE_STATUS_PRIZES	Il vous reste {0} cartes Récompense, à l'adversaire {1}	T key: 0=yours 1=opponent's
+BATTLE_STATUS_MY_ACTIVE	Votre Pokémon Actif : {0}	T key: 0=short summary
+BATTLE_STATUS_OPP_ACTIVE	Pokémon Actif adverse : {0}	T key: 0=short summary
+BATTLE_NOT_YOUR_TURN	Ce n'est pas votre tour	E key
+BATTLE_FINISH_SELECTION_FIRST	Terminez d'abord le choix en cours	a selection is pending
+BATTLE_CANT_END_TURN	Vous ne pouvez pas finir votre tour maintenant	E key refused by the game
+BATTLE_DONE	Terminé	the Done button / option
+BATTLE_DONE_UNAVAILABLE	Terminé, indisponible	Done greyed out by the game
+BATTLE_CANT_CONFIRM	Impossible de confirmer maintenant	no Done button
+BATTLE_CARD_VIEW	Vue de la carte, {0}	I key: 0=card
+BATTLE_CARD_VIEW_CLOSED	Vue de la carte fermée	viewer closed
+BATTLE_CANT_INSPECT	Impossible d'examiner cette carte maintenant	I key refused
+BATTLE_NOTHING_TO_ACT_ON	Rien sur quoi agir	Enter with no card
+BATTLE_NO_ACTIONS	Aucune action pour {0}	0=card
+BATTLE_ACTIONS_FOR	Actions pour {0}.	action menu opened: 0=card
+BATTLE_ATTACK	Attaque	unnamed attack option
+BATTLE_USE_ABILITY	Utiliser le talent	unnamed ability option
+BATTLE_ATTACK_NAMED	Attaque : {0}	0=attack name
+BATTLE_ABILITY_NAMED	Utiliser le talent : {0}	0=ability name
+BATTLE_RETREAT	Retraite	retreat option
+BATTLE_FIRST_ACTION	Première action	top of the action menu
+BATTLE_LAST_ACTION	Dernière action	bottom of the action menu
+BATTLE_NOT_USABLE_NOW	Inutilisable pour le moment	greyed option
+BATTLE_TUTORIAL_FIRST	D'abord : {0}	0=what the tutorial wants
+BATTLE_TUTORIAL_NOT_READY	Le tutoriel n'est pas encore prêt pour cela	card refused by the tutorial
+BATTLE_TUTORIAL_BEFORE_END_TURN	{0}. Faites-le avant de finir votre tour	0=what the tutorial wants
+BATTLE_TUTORIAL_WANTS	Le tutoriel attend {0}	0=card
+BATTLE_TUTORIAL_WANTS_IN	Le tutoriel attend {0}, dans {1}	0=card 1=zone
+BATTLE_CANT_PLAY_THIS	Impossible de jouer cette carte	no card info
+BATTLE_CANT_PLAY_RIGHT_NOW	Vous ne pouvez pas jouer {0} maintenant	0=card
+BATTLE_CANT_PLAY_NOW	Impossible de jouer {0} maintenant	0=card
+BATTLE_USE_CARD_QUESTION	Utiliser {0} ?	no-target card confirmation: 0=card
+BATTLE_HOLDING	{0} en main, choisissez où le poser	card picked up: 0=card
+BATTLE_NOT_A_VALID_SPOT	Emplacement non valide pour cette carte	drop refused
+BATTLE_CANCELLED	Annulé	pickup cancelled
+BATTLE_CANCELLED_CARD	{0} annulé	pickup cancelled: 0=card
+BATTLE_NO_ENERGY_TO_ATTACH	Plus d'Énergie à attacher	attach distribution
+BATTLE_ATTACH_ENERGY_ZONE	Énergie à attacher, {0} disponibles. {1}	0=count 1=first card
+BATTLE_SELECT_HAND_ENERGY	Choisissez une Énergie dans votre main	attach distribution
+BATTLE_CANT_ATTACH	Impossible d'attacher {0}	0=energy
+BATTLE_NO_ENERGY_TO_MOVE_ON	{0} n'a pas d'Énergie à déplacer	0=Pokémon
+BATTLE_CHOOSE_MOVE_SOURCE	Choisissez un Pokémon d'où déplacer l'Énergie	move energy
+BATTLE_CANT_MOVE_ENERGY_FROM	Impossible de déplacer l'Énergie de {0} maintenant	0=Pokémon
+BATTLE_NO_ENERGY_TO_MOVE_FROM	Pas d'Énergie à déplacer depuis {0}	0=Pokémon
+BATTLE_FROM_SOURCE	depuis {0}	0=Pokémon the energy came from
+BATTLE_CAN_RECEIVE_ENERGY	peut recevoir l'Énergie	move energy target tag
+BATTLE_HAS_ENERGY_TO_MOVE	a de l'Énergie à déplacer	move energy source tag
+BATTLE_HELP	A, B, C : votre Pokémon Actif, votre Banc, votre main. X, D, P : votre pile de défausse, votre deck, vos cartes Récompense. Avec Maj : ceux de l'adversaire. S : Stade. Gauche et Droite : les cartes. Bas et Haut : lire la carte ligne par ligne. Maj+Bas : lire jusqu'à la fin. Début, Fin, chiffres : aller à une carte. Entrée : agir sur la carte. I : examiner la carte. T : état du combat. E : finir votre tour. Tab : le bouton Terminé quand il existe. Échap : menu du combat.	F1 on the board
+BATTLE_HELP_HOLDING	Vous tenez une carte. Allez à sa destination avec A, B, S et les flèches, puis Entrée pour la poser. Retour arrière : annuler.	F1 while holding a card
+BATTLE_HELP_ACTION_MENU	Haut et Bas : les actions. Entrée : utiliser l'action. Retour arrière ou Échap : retour au plateau.	F1 in the action menu
+BATTLE_HELP_CARD_VIEW	Bas et Haut : lire la carte ligne par ligne. Retour arrière, Échap ou I : fermer la carte.	F1 in the card view
+BATTLE_HELP_CONFIRM_PLAY	Entrée : jouer la carte. Retour arrière ou Échap : annuler.	F1 on the "Use X?" question
+BATTLE_PROMPT_HELP	Gauche et Droite : les choix. Bas et Haut : lire la carte ligne par ligne. Entrée : choisir. Chiffres : aller à un choix. Tab : le choix Terminé.	F1 on a battle choice
+BATTLE_PROMPT_NEXT_COUNTER	Prêt pour le marqueur suivant	repeatable damage effect
+BATTLE_PROMPT_NO_VALID_CARDS	Aucune carte valide à choisir	fallback for the game's own message
+BATTLE_PROMPT_CHOICE_REQUIRED	Un choix est requis	unsupported prompt with no question
+BATTLE_PROMPT_UNSUPPORTED	{0}. Ce type de choix n'est pas encore pris en charge.	0=question
+BATTLE_PROMPT_PRIZE_CARD	Carte Récompense	a face-down prize option
+BATTLE_PROMPT_TAKE_PRIZE	Prenez une carte Récompense	fallback question
+BATTLE_PROMPT_TAKE_PRIZES	Prenez {0} cartes Récompense	fallback question: 0=count
+BATTLE_PROMPT_PRIZE_FAILED	Impossible de prendre cette carte Récompense	prize pick failed
+BATTLE_PROMPT_PRIZE_SELECTED_MORE	Récompense choisie, {0} sur {1} ; encore {2} à choisir	0=chosen 1=total 2=left
+BATTLE_PROMPT_PRIZE_SELECTED	Récompense choisie, {0} sur {1}	0=chosen 1=total
+BATTLE_PROMPT_PRIZE_DESELECTED	Récompense retirée, {0} choisies	0=chosen
+BATTLE_PROMPT_PRIZE_MAX	Maximum déjà atteint	prize pick over the max
+BATTLE_PROMPT_CHOOSE_AT_LEAST	Choisissez-en au moins {0} ; vous en avez {1}	0=minimum 1=chosen
+BATTLE_PROMPT_TOO_MANY	Trop de cartes choisies	submit over the max
+BATTLE_PROMPT_CHOOSE_CARD	Choisissez une carte	fallback question
+BATTLE_PROMPT_CHOOSE_CARDS	Choisissez {0} cartes	fallback question: 0=count
+BATTLE_PROMPT_CHOOSE_UP_TO_CARDS	Choisissez jusqu'à {0} cartes	fallback question: 0=count
+BATTLE_PROMPT_SELECT_FAILED	Impossible de choisir cette carte	pick failed
+BATTLE_PROMPT_CHANGE_FAILED	Impossible de modifier ce choix	pick did nothing
+BATTLE_PROMPT_SELECTED_COUNT	{0} choisi, {1} sur {2}	0=card 1=chosen 2=total
+BATTLE_PROMPT_DESELECTED_COUNT	{0} retiré, {1} choisis	0=card 1=chosen
+BATTLE_PROMPT_ENERGY_SELECT_FAILED	Impossible de choisir cette Énergie	deferred energy pick timed out
+BATTLE_PROMPT_NO_MORE	Plus de {0} à choisir, {1} sur {2} choisis	0=card 1=chosen 2=total
+BATTLE_PROMPT_CHOOSE_POKEMON	Choisissez un Pokémon	fallback question
+BATTLE_PROMPT_CHOOSE_POKEMONS	Choisissez {0} Pokémon	fallback question: 0=count
+BATTLE_PROMPT_POKEMON_FAILED	Impossible de choisir ce Pokémon	board pick failed
+BATTLE_PROMPT_SELECTED_MORE	Choisi, {0} sur {1} ; encore {2} à choisir	0=chosen 1=total 2=left
+BATTLE_PROMPT_CHOOSE_ATTACK	Choisissez une attaque	fallback question
+BATTLE_PROMPT_CHOOSE_SWITCH	Choisissez un Pokémon à placer en position Active	fallback question
+BATTLE_PROMPT_SWITCH_FAILED	Impossible d'échanger avec ce Pokémon	switch failed
+BATTLE_PROMPT_MOVE_DAMAGE	Déplacez des marqueurs de dégâts d'un Pokémon à un autre	fallback question
+BATTLE_PROMPT_PUT_COUNTER	Placez 1 marqueur de dégâts sur un Pokémon de votre adversaire	fallback question
+BATTLE_PROMPT_PUT_COUNTERS	Placez {0} marqueurs de dégâts sur les Pokémon de votre adversaire	fallback question: 0=count
+BATTLE_PROMPT_MOVE_FROM	Déplacer les dégâts de {0}	source option: 0=Pokémon
+BATTLE_PROMPT_MOVE_FROM_TO_WHICH	Déplacer les dégâts de {0} vers quel Pokémon ?	0=source Pokémon
+BATTLE_PROMPT_MOVE_TO	Déplacer des dégâts sur {0}	target option: 0=Pokémon
+BATTLE_PROMPT_PUT_ON	Placer des dégâts sur {0}	target option: 0=Pokémon
+BATTLE_PROMPT_BACK	Retour	switch damage source
+BATTLE_PROMPT_WAITING	En attente du jeu	server has not answered yet
+BATTLE_PROMPT_LIFT_FAILED	Impossible de prendre les dégâts de ce Pokémon	source distribution failed
+BATTLE_PROMPT_CANT_PUT_THERE	Impossible de placer des dégâts ici	target not a receiver
+BATTLE_PROMPT_NO_COUNTER	Aucun marqueur de dégâts à déplacer	empty tray
+BATTLE_PROMPT_CANT_MOVE_COUNTER	Impossible de déplacer ce marqueur maintenant	counter not targetable
+BATTLE_PROMPT_HAS_DAMAGE	{0} a {1} dégâts.	after a drop: 0=Pokémon 1=total damage
+BATTLE_PROMPT_MOVED_DAMAGE_TO	Dégâts déplacés sur {0}.	after a drop: 0=Pokémon
+BATTLE_PROMPT_PLACE_FAILED	Impossible de placer le marqueur ici	drop refused
+BATTLE_PROMPT_STILL_PLACING	Marqueur en cours de placement	Done during a drop
+BATTLE_PROMPT_NOT_ENOUGH_DAMAGE	Vous n'avez pas encore déplacé assez de dégâts	Done under the minimum
+BATTLE_PROMPT_PILE	{0}, {1} disponibles	collapsed pile: 0=card 1=left
+BATTLE_PROMPT_PILE_SELECTED	{0}, {1} disponibles, {2} choisis	collapsed pile: 0=card 1=left 2=chosen
+BATTLE_PROMPT_LAST_LINE	Dernière ligne	Down past the last card line
+BATTLE_MENU	Menu du combat	the gear panel
+BATTLE_MENU_UNAVAILABLE	Menu du combat indisponible	panel not found
+BATTLE_MENU_NO_OPTIONS	Aucune option	empty panel
+BATTLE_MENU_PERCENT	{0}, {1} pour cent	slider: 0=label 1=value
+BATTLE_MENU_HELP	Haut et Bas : les options. Gauche et Droite : régler un curseur ou une liste. Entrée : appuyer. Échap ou Retour arrière : fermer le menu.	F1 in the battle menu
+BATTLE_RESULT_WON	Vous avez gagné.	outcome
+BATTLE_RESULT_LOST	Vous avez perdu.	outcome
+BATTLE_RESULT_PLAYER_STATS	{0} : {1}	0=player 1=stats
+BATTLE_RESULT_XP	Expérience	reward tile
+BATTLE_RESULT_PASS_XP	Expérience du Passe de combat	reward tile
+BATTLE_RESULT_RANK_POINTS	Points de classement	reward tile
+BATTLE_RESULT_ITEM_TIMES	{0} fois {1}	0=item 1=count
+BATTLE_RESULT_REWARDS	Récompenses du match	fallback for the game's own header
+BATTLE_RESULT_HELP	Entrée ou Espace : continuer. Sur la page des statistiques, Haut et Bas : les boutons, Entrée : appuyer.	F1 on the result screen
+BATTLE_INTRO_OPPONENT	Adversaire	unnamed opponent
+BATTLE_INTRO_VERSUS	Contre {0}	0=opponent
+BATTLE_INTRO_VERSUS_RANK	Contre {0}, {1}	0=opponent 1=rank
+BATTLE_INTRO_YOU_RANK	Vous, {0}	0=your rank
+BATTLE_MULLIGANS	Mulligans	popup title
+BATTLE_MULLIGAN_A_PLAYER	Un joueur	unnamed player
+BATTLE_MULLIGAN_ONE	{0} a dû faire 1 mulligan avant de piocher un Pokémon de base.	0=player
+BATTLE_MULLIGAN_MANY	{0} a dû faire {1} mulligans avant de piocher un Pokémon de base.	0=player 1=count
+BATTLE_MULLIGAN_HIDDEN	cartes cachées	no revealed names
+BATTLE_MULLIGAN_NTH	Mulligan {0} : {1}	0=number 1=cards
