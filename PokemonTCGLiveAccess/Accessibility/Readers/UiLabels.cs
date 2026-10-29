@@ -1,0 +1,196 @@
+using System.Reflection;
+using HarmonyLib;
+using UnityEngine.UI;
+
+namespace Accessibility;
+
+// Game-specific spoken labels for controls the generic text-scrape can't name well.
+//
+// Two layers:
+//   • Friendly(goName) — a name map for icon/badge-only buttons (their only text is an icon or a
+//     notification badge), keyed by the prefab GameObject name (stable across locales).
+//   • Describe(selectable) — composite widgets whose meaning is more than one text child (a shop
+//     product tile = name + price). We read the OWNING controller, not the button's own text.
+//
+// KeyboardNavigator.ResolveBaseLabel consults Describe first, then Friendly, then text scraping.
+internal static class UiLabels
+{
+    // ExpansionSelection keeps owned/max behind its "11/122" text as private ints.
+    private static readonly FieldInfo? s_ownedCollectionCount = AccessTools.Field(typeof(ExpansionSelection), "ownedCollectionCount");
+    private static readonly FieldInfo? s_maxCollectionCount = AccessTools.Field(typeof(ExpansionSelection), "maxCollectionCount");
+
+    public static string? Friendly(string? goName) => goName switch
+    {
+        "ExpansionChallengeButton" => LocalizationUtils.Get(LocalizationKey.UI_BATTLE_PASS),        // HOME shortcut: only text child is a "1" reward badge
+        "QuestBtn" => LocalizationUtils.Get(LocalizationKey.UI_QUESTS),                              // Battle Pass: the daily-quest / collect button
+        "SettingsButton" => LocalizationUtils.Get(LocalizationKey.UI_MENU),                          // top bar "⋮" — opens the overflow menu
+        "Btn_Rank" => LocalizationUtils.Get(LocalizationKey.UI_RANK),                                // HOME: rank hex, text child is the points count
+        "Btn_ProductDetailsPurchase" => LocalizationUtils.Get(LocalizationKey.UI_CONFIRM_PURCHASE), // shop product-details overlay buy button
+        _ => null,
+    };
+
+    // Icon-only controls named by the game method their onClick is wired to in the prefab. The
+    // GameObject name of an icon button is a prefab detail that changes between art passes; the
+    // method its UnityEvent calls is real game code we've read, so it's the stabler anchor — and it
+    // says exactly what the button does. Only consulted when the control carries no worded text of
+    // its own (KeyboardNavigator.ResolveBaseLabel), so a labelled button always keeps the game's own
+    // localized text.
+    //
+    // Each entry pairs the game's OWN localization id for that control with our fallback key, so
+    // the spoken label follows the client language rather than being baked in.
+    // ONLY methods the prefab wires PERSISTENTLY belong here — GetPersistentMethodName sees prefab
+    // (inspector) onClick entries, never runtime AddListener ones. The DECKS-panel pencil is wired at
+    // runtime (DeckPanel_L.OnEnable → AddListener(OpenDeckRenameMenu)), so it is invisible to this map
+    // and must be labelled by identity in the deck-select screen instead.
+    private static string? ActionLabel(string? method) => method switch
+    {
+        // The ✎ pencil beside the deck name in the deck EDITOR (prefab-wired to Settings_BeginNameChange).
+        "Settings_BeginNameChange" => LocalizationUtils.GetGame("ui_deck_options_rename", LocalizationKey.UI_RENAME_DECK),
+        // The ⋮ that opens the deck-options menu from inside the editor.
+        "OpenLandscapeDeckOptions" => LocalizationUtils.GetGame("deck_options", LocalizationKey.UI_DECK_OPTIONS),
+        _ => null,
+    };
+
+    public static string? ByAction(Selectable s)
+    {
+        if (s is not Button b) return null;
+        try
+        {
+            int n = b.onClick.GetPersistentEventCount();
+            for (int i = 0; i < n; i++)
+            {
+                var a = ActionLabel(b.onClick.GetPersistentMethodName(i));
+                if (a != null) return a;
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    // Is this button wired, in the prefab, to a particular game method? The stable way to identify an
+    // icon-only control: its GameObject name is art, the method it calls is game code we've read.
+    public static bool HasHandler(Button? b, string method)
+    {
+        if (b == null) return false;
+        try
+        {
+            int n = b.onClick.GetPersistentEventCount();
+            for (int i = 0; i < n; i++)
+                if (b.onClick.GetPersistentMethodName(i) == method) return true;
+        }
+        catch { }
+        return false;
+    }
+
+    // The persistent (prefab-wired) onClick method names of a button, for diagnostics. An icon-only
+    // control tells us nothing by its GameObject name; this says what it actually does.
+    public static string Handlers(Button? b)
+    {
+        if (b == null) return "";
+        try
+        {
+            int n = b.onClick.GetPersistentEventCount();
+            if (n == 0) return "";
+            var parts = new string[n];
+            for (int i = 0; i < n; i++) parts[i] = b.onClick.GetPersistentMethodName(i) ?? "?";
+            return string.Join("+", parts);
+        }
+        catch { return ""; }
+    }
+
+    // HUB top-strip tab label with the game's selected state appended ("HOME, selected"). The
+    // selected tab is the one whose PersistentNavButtonGroup animator is in its "On" state — the
+    // same signal the game uses to highlight the current tab. Other strips already say
+    // selected/not-selected for their toggles; this gives the top strip parity.
+    public static string TopNavLabel(Selectable s)
+    {
+        try
+        {
+            var grp = s.GetComponentInParent<PersistentNavButtonGroup>();
+            // The current tab's button is disabled by the game so it can't be re-pressed — that's
+            // "selected", not "unavailable", so build from the base name rather than DefaultLabel.
+            if (grp != null && grp.IsOn()) return Announce.WithState(KeyboardNavigator.ResolveBaseLabel(s), LocalizationKey.GLOBAL_SELECTED);
+        }
+        catch { }
+        return KeyboardNavigator.DefaultLabel(s);
+    }
+
+    // Rich label for composite widgets. Returns null when not applicable (caller falls back to
+    // text-scraping / humanized name).
+    public static string? Describe(Selectable s)
+    {
+        if (s == null) return null;
+
+        // HOME rank hex (Btn_Rank): its only text child is the bare rank-points number, so name it with
+        // the full ranked status — league, rank tier, points, and points-to-next — read from the live
+        // season config. Falls through to the "Rank" friendly name (below) until the season data loads.
+        if (s.gameObject.name == "Btn_Rank")
+        {
+            var rank = RankReader.Status();
+            if (!string.IsNullOrEmpty(rank)) return rank;
+        }
+
+        // Shop product tile (booster pack, bundle, collection, …) → "name, price, N available".
+        // The focused control sits INSIDE the tile (its own text is just a price/icon), so we read
+        // the owning ShopProductController. See ShopLabels.
+        var product = s.GetComponentInParent<ShopProductController>();
+        if (product != null) return ShopLabels.Product(product);
+
+        // Shop expansion tile (selects a set to shop; shows collection progress as "11/122") →
+        // "Expansion, 11 of 122 cards collected". The button lives inside an ExpansionSelection;
+        // owned/max are private ints behind that "11/122" text.
+        var expansion = s.GetComponentInParent<ExpansionSelection>();
+        if (expansion != null)
+        {
+            int owned = ReadInt(s_ownedCollectionCount, expansion);
+            int max = ReadInt(s_maxCollectionCount, expansion);
+            var name = ShopLabels.ExpansionName(expansion);
+            var head = string.IsNullOrEmpty(name) ? LocalizationUtils.Get(LocalizationKey.UI_EXPANSION) : name!;
+            return max > 0 ? LocalizationUtils.Format(LocalizationKey.UI_EXPANSION_COLLECTED_FORMAT, head, owned, max) : head;
+        }
+
+        // Shop collection-header tooltip "(i)" button (icon-only, on RECOMMENDED / NEW ARRIVALS):
+        // it sits under the ShopProductCollection but outside any product tile and has no worded
+        // text, so name it by its section instead of reading a bare "info".
+        var collection = s.GetComponentInParent<ShopProductCollection>();
+        if (collection != null && !HasLetterTextChild(s))
+            return LocalizationUtils.Format(LocalizationKey.UI_INFORMATION_FORMAT, ShopLabels.CollectionTitle(collection));
+
+        // Icon-only control in the expansion view — chiefly the drawer button that opens the set
+        // picker. Text-bearing controls there (series-filter buttons) keep their own label.
+        if (s.GetComponentInParent<ShopPageExpansionsScreen>() != null && !HasLetterTextChild(s))
+            return LocalizationUtils.Get(LocalizationKey.UI_CHOOSE_EXPANSION);
+
+        // Format toggle (ChangeGameModeButton — DECKS header, and inside the deck editor since the
+        // Milestone3 update): its only text child is the bare format name ("Standard"), which alone
+        // doesn't say what pressing it does. Say the action, then the game's own localized format.
+        if (s.GetComponentInParent<ChangeGameModeButton>() != null)
+        {
+            var current = FirstLetterText(s);
+            return string.IsNullOrEmpty(current)
+                ? LocalizationUtils.Get(LocalizationKey.UI_CHANGE_FORMAT)
+                : LocalizationUtils.Format(LocalizationKey.UI_CHANGE_FORMAT_CURRENT, current);
+        }
+
+        return null;
+    }
+
+    // The first letter-bearing text under the control (skips icon glyphs / bare numbers).
+    private static string? FirstLetterText(Selectable s)
+    {
+        foreach (var t in s.GetComponentsInChildren<TMPro.TMP_Text>(includeInactive: false))
+            if (HasLetter(t.text)) return t.text.Trim();
+        return null;
+    }
+
+    private static bool HasLetterTextChild(Selectable s) => FirstLetterText(s) != null;
+
+    internal static bool HasLetter(string? s)
+    {
+        if (string.IsNullOrEmpty(s)) return false;
+        foreach (var c in s!) if (char.IsLetter(c)) return true;
+        return false;
+    }
+
+    private static int ReadInt(FieldInfo? field, object o) => field?.GetValue(o) is int n ? n : -1;
+}

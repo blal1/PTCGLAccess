@@ -1,0 +1,68 @@
+TAG	TEXT	COMMENT
+COMMON_STATE_FORMAT	{0}, {1}	0=label 1=state or description (checked, selected, unavailable...)
+COMMON_NAME_COPIED	{0}, copied to clipboard	N key: 0=the player's screen name
+
+NAV_ECHO_INSERTED	inserted	text field: several characters pasted
+NAV_ECHO_DELETED	deleted	text field: several characters removed
+NAV_ECHO_DELETED_FORMAT	{0} deleted	text field: 0=the character erased
+NAV_ECHO_SPACE	space	text field: a typed or crossed space
+NAV_CARET_START	start	text field: caret at the beginning
+NAV_CARET_END	end	text field: caret at the end
+NAV_FIELD_BLANK	blank	empty text field
+NAV_EDIT_FIELD_FORMAT	{0}, {1}, edit field	0=field name 1=current contents
+
+UI_BATTLE_PASS	Battle Pass	HOME shortcut button
+UI_QUESTS	Quests	Battle Pass quest button
+UI_MENU	Menu	top bar overflow button
+UI_RANK	Rank	HOME rank button
+UI_CONFIRM_PURCHASE	Confirm purchase	shop product details buy button
+UI_RENAME_DECK	Rename deck	deck editor pencil button (fallback, the game's text is used first)
+UI_DECK_OPTIONS	Deck options	deck editor options button (fallback)
+UI_EXPANSION	Expansion	shop expansion tile without a name
+UI_EXPANSION_COLLECTED_FORMAT	{0}, {1} of {2} cards collected	0=expansion 1=owned 2=total
+UI_INFORMATION_FORMAT	{0}, information	shop section info button: 0=section title
+UI_CHOOSE_EXPANSION	Choose expansion	shop expansion picker button
+UI_CHANGE_FORMAT	Change format	format toggle (Standard / Expanded)
+UI_CHANGE_FORMAT_CURRENT	Change format, {0}	0=current format name
+
+SHOP_PRODUCT	Product	shop tile without readable text
+SHOP_PRODUCTS	Products	shop section without a title
+SHOP_SOLD_OUT	sold out	shop product
+SHOP_AVAILABLE_FORMAT	{0} available	shop product stock: 0=count
+SHOP_CRYSTALS	Crystals	currency (fallback, the game's text is used first)
+SHOP_CREDITS	Credits	currency (fallback)
+SHOP_TOKENS	Tokens	currency (fallback)
+SHOP_KEYS	Keys	currency (fallback)
+SHOP_COINS	Coins	currency (fallback)
+
+RANK_ONE_POINT	1 rank point	ranked status
+RANK_POINTS	{0} rank points	ranked status: 0=points
+RANK_ONE_POINT_TO_NEXT	1 point to next rank	ranked status
+RANK_POINTS_TO_NEXT	{0} points to next rank	ranked status: 0=points
+RANK_ELO	{0} Elo	top league rating: 0=Elo
+
+CARD_CARD	card	a card without a name
+CARD_BASIC_POKEMON	Basic Pokémon	card type
+CARD_STAGE1_POKEMON	Stage 1 Pokémon	card type
+CARD_STAGE2_POKEMON	Stage 2 Pokémon	card type
+CARD_POKEMON	Pokémon	card type
+CARD_TRAINER	Trainer	card type
+CARD_ENERGY	Energy	card type
+CARD_VARIANT_MASTER_BALL	Master Ball pattern	card print treatment
+CARD_VARIANT_POKE_BALL	Poké Ball pattern	card print treatment
+CARD_VARIANT_REVERSE_HOLO	reverse holo	card print treatment
+CARD_VARIANT_ALTERNATE_ART	alternate art	card print treatment
+CARD_HP	{0} hit points	0=HP
+CARD_NONE	none	no weakness / resistance / type
+CARD_WEAKNESS_VALUE	{0} times {1}	0=type 1=multiplier
+CARD_RESISTANCE_VALUE	{0} minus {1}	0=type 1=amount
+CARD_STATS	Type {0}. Weakness {1}. Resistance {2}. Retreat cost {3}	0=type 1=weakness 2=resistance 3=retreat cost
+CARD_DAMAGE	{0} damage	attack damage: 0=amount
+CARD_COST	cost {0}	attack cost: 0=list like "2 Grass, 1 Colorless"
+CARD_ACE_SPEC_RULE	ACE SPEC. You can have only 1 ACE SPEC card in your deck.	printed rule box
+CARD_KO_PRIZES_RULE	When this Pokémon is Knocked Out, your opponent takes {0} Prize cards.	printed rule box: 0=prize count
+CARD_MARKER_V_UNION	V-UNION	card name marker
+CARD_OWNED	{0} owned	collection: 0=copies owned
+CARD_NOT_OWNED	not owned	collection
+CARD_NEW	new	collection: newly obtained card
+CARD_NUMBER	number {0}	collector number: 0=number

@@ -1,0 +1,68 @@
+TAG	TEXT	COMMENT
+COMMON_STATE_FORMAT	{0}, {1}	0=label 1=state or description (checked, selected, unavailable...)
+COMMON_NAME_COPIED	{0}, copié dans le presse-papiers	N key: 0=the player's screen name
+
+NAV_ECHO_INSERTED	inséré	text field: several characters pasted
+NAV_ECHO_DELETED	supprimé	text field: several characters removed
+NAV_ECHO_DELETED_FORMAT	{0} supprimé	text field: 0=the character erased
+NAV_ECHO_SPACE	espace	text field: a typed or crossed space
+NAV_CARET_START	début	text field: caret at the beginning
+NAV_CARET_END	fin	text field: caret at the end
+NAV_FIELD_BLANK	vide	empty text field
+NAV_EDIT_FIELD_FORMAT	{0}, {1}, zone de saisie	0=field name 1=current contents
+
+UI_BATTLE_PASS	Passe de combat	HOME shortcut button
+UI_QUESTS	Quêtes	Battle Pass quest button
+UI_MENU	Menu	top bar overflow button
+UI_RANK	Rang	HOME rank button
+UI_CONFIRM_PURCHASE	Confirmer l'achat	shop product details buy button
+UI_RENAME_DECK	Renommer le deck	deck editor pencil button (fallback, the game's text is used first)
+UI_DECK_OPTIONS	Options du deck	deck editor options button (fallback)
+UI_EXPANSION	Extension	shop expansion tile without a name
+UI_EXPANSION_COLLECTED_FORMAT	{0}, {1} cartes collectionnées sur {2}	0=expansion 1=owned 2=total
+UI_INFORMATION_FORMAT	{0}, informations	shop section info button: 0=section title
+UI_CHOOSE_EXPANSION	Choisir une extension	shop expansion picker button
+UI_CHANGE_FORMAT	Changer de format	format toggle (Standard / Expanded)
+UI_CHANGE_FORMAT_CURRENT	Changer de format, {0}	0=current format name
+
+SHOP_PRODUCT	Produit	shop tile without readable text
+SHOP_PRODUCTS	Produits	shop section without a title
+SHOP_SOLD_OUT	épuisé	shop product
+SHOP_AVAILABLE_FORMAT	{0} disponibles	shop product stock: 0=count
+SHOP_CRYSTALS	Cristaux	currency (fallback, the game's text is used first)
+SHOP_CREDITS	Crédits	currency (fallback)
+SHOP_TOKENS	Jetons	currency (fallback)
+SHOP_KEYS	Clés	currency (fallback)
+SHOP_COINS	Pièces	currency (fallback)
+
+RANK_ONE_POINT	1 point de rang	ranked status
+RANK_POINTS	{0} points de rang	ranked status: 0=points
+RANK_ONE_POINT_TO_NEXT	1 point avant le rang suivant	ranked status
+RANK_POINTS_TO_NEXT	{0} points avant le rang suivant	ranked status: 0=points
+RANK_ELO	{0} Elo	top league rating: 0=Elo
+
+CARD_CARD	carte	a card without a name
+CARD_BASIC_POKEMON	Pokémon de base	card type
+CARD_STAGE1_POKEMON	Pokémon Niveau 1	card type
+CARD_STAGE2_POKEMON	Pokémon Niveau 2	card type
+CARD_POKEMON	Pokémon	card type
+CARD_TRAINER	Dresseur	card type
+CARD_ENERGY	Énergie	card type
+CARD_VARIANT_MASTER_BALL	motif Master Ball	card print treatment
+CARD_VARIANT_POKE_BALL	motif Poké Ball	card print treatment
+CARD_VARIANT_REVERSE_HOLO	holographique inversée	card print treatment
+CARD_VARIANT_ALTERNATE_ART	illustration alternative	card print treatment
+CARD_HP	{0} PV	0=HP
+CARD_NONE	aucune	no weakness / resistance / type
+CARD_WEAKNESS_VALUE	{0} fois {1}	0=type 1=multiplier
+CARD_RESISTANCE_VALUE	{0} moins {1}	0=type 1=amount
+CARD_STATS	Type {0}. Faiblesse {1}. Résistance {2}. Coût de Retraite {3}	0=type 1=weakness 2=resistance 3=retreat cost
+CARD_DAMAGE	{0} dégâts	attack damage: 0=amount
+CARD_COST	coût {0}	attack cost: 0=list like "2 Grass, 1 Colorless"
+CARD_ACE_SPEC_RULE	AS TACTIQUE. Vous ne pouvez avoir qu'une seule carte AS TACTIQUE dans votre deck.	printed rule box
+CARD_KO_PRIZES_RULE	Lorsque ce Pokémon est mis K.O., votre adversaire récupère {0} cartes Récompense.	printed rule box: 0=prize count
+CARD_MARKER_V_UNION	V-UNION	card name marker
+CARD_OWNED	{0} possédées	collection: 0=copies owned
+CARD_NOT_OWNED	non possédée	collection
+CARD_NEW	nouvelle	collection: newly obtained card
+CARD_NUMBER	numéro {0}	collector number: 0=number

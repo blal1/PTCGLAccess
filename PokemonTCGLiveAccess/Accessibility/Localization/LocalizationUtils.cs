@@ -42,12 +42,18 @@ internal static class LocalizationUtils
         }
     }
 
-    public static string GetGame(string resourceId, LocalizationKey fallback)
+    public static string GetGame(string resourceId, LocalizationKey fallback) => TryGetGame(resourceId) ?? Get(fallback);
+
+    // The game's own string, or null when the id is empty or the game has no text for it (it answers a missing id
+    // with a "(Missing)" / "MISSING STRING" marker that must never be spoken). For game data ids (set, rarity,
+    // league names) where the caller has its own fallback.
+    public static string? TryGetGame(string? resourceId)
     {
+        if (string.IsNullOrEmpty(resourceId)) return null;
         string? text = null;
         try { text = LocalizationManager.Instance?.GetString(resourceId); }
         catch (Exception e) { Log.Warn($"Localization: game string {resourceId} threw {e.GetType().Name}"); }
-        if (string.IsNullOrWhiteSpace(text) || text!.Contains("(Missing)") || text.StartsWith("MISSING STRING")) return Get(fallback);
+        if (string.IsNullOrWhiteSpace(text) || text!.Contains("(Missing)") || text.StartsWith("MISSING STRING")) return null;
         return text;
     }
 

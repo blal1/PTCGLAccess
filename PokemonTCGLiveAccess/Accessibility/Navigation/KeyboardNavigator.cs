@@ -1,0 +1,970 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace Accessibility;
+
+// Reusable keyboard navigation for any uGUI screen.
+//
+// PTCGL has zero native keyboard nav (no InputModule reads arrows/Tab, no Selectable.navigation
+// is configured anywhere — verified by reading the decompiled source). So every screen handler
+// needs to read keys itself, but we *don't* synthesize parallel focus state: each focus change
+// goes through Selectable.Select() (sets EventSystem.currentSelectedGameObject + fires the game's
+// own OnSelect handlers), and each activation goes through Button.onClick.Invoke() — the same
+// UnityEvent a mouse click would fire, with the locale args already wired in the prefab.
+//
+// Source-level safety nets baked in here so every screen handler benefits:
+//   - Vertical / Horizontal / Tab axes are individually toggleable (per-screen).
+//   - Items hidden behind another raycast target (modal overlay, blocker panel) are skipped:
+//     uGUI's own raycast tells us when a button isn't actually clickable right now.
+//   - Window-focus gate: AccessibilityMgr only calls HandleInput while the game window is focused.
+//
+// An AccessibleElement: it speaks through its owning component, so it falls silent when that component
+// loses focus. The owner calls HandleInput() from its own HandleInput().
+internal sealed class KeyboardNavigator : AccessibleElement, INavSection
+{
+    public delegate string LabelResolver(Selectable s);
+
+    private readonly List<Selectable> m_items = new();
+    private LabelResolver m_resolveLabel = DefaultLabel;
+    private int m_index = -1;
+
+    // Character echo for the focused text field (no OS-level echo exists for Unity input fields).
+    private TMPro.TMP_InputField? m_echoTmp;
+    private InputField? m_echoLegacy;
+    private string m_echoPrev = string.Empty;
+    private int m_caretPrev = -1;
+    private string m_caretPrevText = string.Empty;
+
+    // Axis config — default: vertical-only list nav. Set Horizontal / Tab true per-screen for grids / tab strips.
+    public bool AllowVertical { get; set; } = true;
+    public bool AllowHorizontal { get; set; } = false;
+    public bool AllowTab { get; set; } = false;
+
+    // When true, Toggle items act like radio buttons / tabs instead of checkboxes: Enter or
+    // Space *selects* the focused item (sets isOn = true) and never un-toggles it. The items
+    // are expected to share a ToggleGroup, so selecting one turns the previously-selected one
+    // off and fires the game's own onValueChanged (e.g. a game-mode tab → view switch). Supply
+    // a custom label resolver for these ("Ranked, selected") — the default checkbox label
+    // ("checked/unchecked") reads wrong for a tab strip.
+    public bool RadioToggleMode { get; set; } = false;
+
+    // Column count of the item grid as measured from screen positions in SetItems. Only
+    // consulted when both axes are live (a real grid) — see Columns.
+    private int m_detectedColumns = 1;
+
+    // For grid layouts. Up/Down moves by Columns items at a time; Left/Right by 1.
+    //
+    // DERIVED from the axis flags, never stored: a handler is free to override AllowVertical /
+    // AllowHorizontal after SetItems, and Columns must follow, because every move and every
+    // section-escape gate divides by it.
+    //   vertical-only   → 1           (a flat list: Down steps one item)
+    //   horizontal-only → item count  (a single row: Left/Right crosses it, and IsAtTopRow /
+    //                                  IsAtBottomRow are true everywhere so section-escape works)
+    //   both (a grid)   → the measured column count
+    // Freezing it at SetItems time instead silently strands navigation whenever the handler's
+    // chosen axis disagrees with the auto-detected one: a vertical-only override on a wide
+    // button block keeps Columns = count, so Down targets a row that doesn't exist and dies.
+    public int Columns
+    {
+        get
+        {
+            if (AllowHorizontal && !AllowVertical) return Mathf.Max(1, m_items.Count);
+            if (AllowVertical && !AllowHorizontal) return 1;
+            return Mathf.Max(1, m_detectedColumns);
+        }
+    }
+
+    // Escape / Backspace = back. Each popup-type handler wires this to its own dismiss path
+    // (SimpleMessage: closeButton.onClick; ModalElementContainer: Close(); OverlayScreenGroup: Deactivate()).
+    // Null = back is a no-op for this screen (e.g. first-launch screens with nowhere to go back to).
+    public Action? OnBack { get; set; }
+
+    // Group / section name. When a screen has multiple Tab-cycled groups, each group's
+    // KeyboardNavigator gets a name (e.g. "Agreements", "Continue"). FocusFirst announces
+    // the name interrupting, then queues the first item — so on a Tab transition the user
+    // hears "Agreements. I agree to the Terms of Use, unchecked, 1 of 2". MoveBy / Activate
+    // don't repeat the group name; the user knows their context once they're in it.
+    public string? GroupName { get; set; }
+
+    public KeyboardNavigator(AccessibleComponent parent) : base(parent) { }
+
+    public int Index => m_index;
+    public int Count => m_items.Count;
+    public Selectable? Current => m_index >= 0 && m_index < m_items.Count ? m_items[m_index] : null;
+
+    // True when the current focus is in the visual top row of the group's grid. Used by
+    // screen handlers to decide whether an Up arrow should escape to a section above this
+    // one (rather than being a no-op when MoveBy(-Columns) hits the top).
+    // A group holding NO focus (nothing in it was focusable when we tried to enter) reports itself
+    // as being at BOTH edges, so an arrow leaves it instead of dead-ending. Returning false here is
+    // what made an unfocusable section a black hole: every section-stack screen gates its escape on
+    // `activeGroup > 0 && nav.IsAtTopRow` / `< Count-1 && nav.IsAtBottomRow`, so with m_index = -1
+    // BOTH directions were refused and the user was stranded with no focus and no way out (the HUB
+    // Settings back-arrow trap). Same semantics CardDexSections states explicitly for a section that
+    // cannot move internally: always escapable.
+    public bool IsAtTopRow
+    {
+        get
+        {
+            if (m_index < 0 || m_items.Count == 0) return true;   // no focus → never trap
+            return !HasNavigableInRowBeyond(-1);
+        }
+    }
+    // True when there is nowhere navigable left BELOW the focus in this group — i.e. Down should
+    // leave the section rather than move inside it.
+    public bool IsAtBottomRow
+    {
+        get
+        {
+            if (m_index < 0 || m_items.Count == 0) return true;   // see IsAtTopRow — never trap
+            return !HasNavigableInRowBeyond(+1);
+        }
+    }
+
+    // Is there any NAVIGABLE item in a row beyond the current one, in `direction`? This is the
+    // question a section escape actually needs answered: "can I still move inside this group?".
+    // Testing raw indices instead was a trap — a group whose trailing items are inactive (the game
+    // switches individual controls off) reported "not at the bottom row", so Down was refused as a
+    // section escape AND had nowhere navigable to move to, leaving the user stuck on the last live
+    // item with an arrow key that did nothing at all.
+    private bool HasNavigableInRowBeyond(int direction)
+    {
+        int cols = Columns;
+        if (cols <= 0) return false;
+        int currentRow = m_index / cols;
+        for (int i = 0; i < m_items.Count; i++)
+        {
+            int row = i / cols;
+            if (direction > 0 ? row > currentRow : row < currentRow)
+                if (IsNavigable(m_items[i])) return true;
+        }
+        return false;
+    }
+
+    // Current column (0..Columns-1) of the focused item, or -1 if no focus. Lets the screen
+    // handler preserve the user's column when escaping vertically into a different group —
+    // e.g. user on FACE (col 0 of avatar grid) presses Up, escape lands them on FRIENDS,
+    // press Up again, escape lands on the HOME tab (col 0 of the top strip).
+    public int CurrentColumn => m_index >= 0 ? m_index % Columns : -1;
+
+    public IReadOnlyList<Selectable> Items => m_items;
+
+    // Focus a specific item by index (used by handler-driven / spatial navigation).
+    public void FocusIndex(int i, bool announce = true, bool interrupt = true)
+    {
+        if (i < 0 || i >= m_items.Count) return;
+        SetIndex(i, announce, interrupt, announceGroup: false);
+    }
+
+    // 2-D spatial move: from the focused item, pick the nearest navigable item in the (dx,dy) screen
+    // direction (dy>0 = up). Returns false when there's nothing that way — the screen handler uses
+    // that to escape to an adjacent section (HOME-style). Works for irregular grids where fixed-
+    // Columns math strands items (e.g. a 2-then-4 button panel), so Right and Down differ correctly.
+    public bool TrySpatialMove(int dx, int dy, bool announce = true)
+    {
+        if (m_index < 0 || m_index >= m_items.Count) { FocusFirst(announce); return m_index >= 0; }
+        int target = SpatialPick(m_items, m_index, dx, dy);
+        if (target < 0) return false;
+        SetIndex(target, announce, interrupt: true, announceGroup: false);
+        return true;
+    }
+
+    private static int SpatialPick(IReadOnlyList<Selectable> items, int cur, float dx, float dy)
+    {
+        if (cur < 0 || cur >= items.Count || items[cur] == null) return -1;
+        var from = WorldCenter(items[cur]);
+        int best = -1; float bestScore = float.MaxValue;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (i == cur || items[i] == null || !items[i].isActiveAndEnabled) continue;
+            var c = WorldCenter(items[i]);
+            float ox = c.x - from.x, oy = c.y - from.y;
+            float along = ox * dx + oy * dy;            // distance in the chosen direction
+            if (along <= 2f) continue;                  // must be that way (small deadzone)
+            float perp = Mathf.Abs(ox * dy - oy * dx);  // sideways offset from the axis
+            float score = along + perp * 2.5f;          // prefer aligned + close
+            if (score < bestScore) { bestScore = score; best = i; }
+        }
+        return best;
+    }
+
+    public static Vector2 WorldCenter(Selectable s)
+    {
+        if (s.transform is RectTransform rt)
+        {
+            var c = new Vector3[4];
+            rt.GetWorldCorners(c);
+            return (c[0] + c[2]) * 0.5f;
+        }
+        var p = s.transform.position;
+        return new Vector2(p.x, p.y);
+    }
+
+    public void SetItems(IEnumerable<Selectable> items, LabelResolver? resolver = null)
+    {
+        UnwireEcho();
+        m_items.Clear();
+        foreach (var s in items)
+            if (s != null) m_items.Add(s);
+        m_resolveLabel = resolver ?? DefaultLabel;
+        m_index = -1;
+
+        // Auto-detect orientation from the items' bounding box. Handlers can still override
+        // AllowVertical / AllowHorizontal after SetItems if the visual layout doesn't match
+        // how we want to navigate (e.g. a 2-column grid that the user prefers as a flat list);
+        // Columns is derived from the flags, so such an override stays coherent.
+        if (m_items.Count > 1)
+        {
+            var (vertical, horizontal) = DetectAxes(m_items);
+            AllowVertical = vertical;
+            AllowHorizontal = horizontal;
+            m_detectedColumns = DetectColumns(m_items);
+        }
+        else
+        {
+            m_detectedColumns = 1;
+        }
+    }
+
+    // Force a flat single-column vertical list, overriding the bounding-box auto-detection. Call
+    // AFTER SetItems. Use this for menus/panels that are conceptually a simple top-to-bottom list
+    // and must have predictable Up/Down through every item — auto-detect can mis-read the axis when
+    // the item set is wider than it is tall (a big primary button above a row of secondary ones) or
+    // includes an off-to-the-side / full-screen element (a window X plus an invisible tap-outside
+    // blocker). Down/Up then step linearly through every item in reading order, exactly like Tab.
+    public void ForceFlatVertical()
+    {
+        AllowVertical = true;
+        AllowHorizontal = false;
+    }
+
+    // Force a flat single-ROW horizontal strip, overriding the bounding-box auto-detection. Call AFTER
+    // SetItems. Use for a row of controls that are conceptually one left-to-right strip but sit at
+    // slightly different heights (e.g. a screen header: back / info / rewards) — auto-detect would read
+    // them as a vertical list, and Left/Right (which uses sameRowOnly) then can't cross "rows",
+    // stranding every item but the first. Horizontal-only puts every item in row 0, so Left/Right
+    // steps through them all in order.
+    public void ForceFlatHorizontal()
+    {
+        AllowVertical = false;
+        AllowHorizontal = true;
+    }
+
+    // Count of items in the first visual row — used by Up/Down to jump rows instead of items.
+    // Items are expected ordered top-to-bottom, left-to-right (HUBProfileScreen.RebuildGroups
+    // does this via ReadingOrder). We count consecutive items whose y matches the first
+    // item's y within a small tolerance, then stop at the first y-drop (= start of row 2).
+    public static int DetectColumns(IReadOnlyList<Selectable> items)
+    {
+        if (items.Count <= 1) return 1;
+        var firstY = items[0].transform.position.y;
+        // Tolerance scales with the height of the first item so it works at any UI scale.
+        var tolerance = 1f;
+        if (items[0].transform is RectTransform rt)
+        {
+            var corners = new Vector3[4];
+            rt.GetWorldCorners(corners);
+            tolerance = Mathf.Max(1f, Mathf.Abs(corners[1].y - corners[0].y) * 0.5f);
+        }
+        int columns = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i] == null) continue;
+            var y = items[i].transform.position.y;
+            if (Mathf.Abs(y - firstY) <= tolerance) columns++;
+            else break;
+        }
+        return Mathf.Max(1, columns);
+    }
+
+    // Decide which arrow keys make sense for a focus group by measuring how its items spread
+    // on screen. If the bounding box is much wider than tall, only horizontal arrows. Much
+    // taller than wide → only vertical. Roughly equal → both (grid). Single-item groups
+    // default to vertical (doesn't matter; arrows are no-ops with one item anyway).
+    public static (bool vertical, bool horizontal) DetectAxes(IReadOnlyList<Selectable> items)
+    {
+        if (items.Count <= 1) return (true, false);
+
+        float minX = float.MaxValue, maxX = float.MinValue;
+        float minY = float.MaxValue, maxY = float.MinValue;
+        foreach (var s in items)
+        {
+            if (s == null) continue;
+            var p = s.transform.position;
+            if (p.x < minX) minX = p.x;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.y > maxY) maxY = p.y;
+        }
+
+        var widthRange = maxX - minX;
+        var heightRange = maxY - minY;
+
+        const float ratio = 1.5f;
+        if (widthRange > heightRange * ratio) return (false, true);
+        if (heightRange > widthRange * ratio) return (true, false);
+        return (true, true);
+    }
+
+    public void FocusFirst(bool announce = true, bool interruptPrior = true)
+    {
+        if (m_items.Count == 0) return;
+        // Allow disabled items here — desktop accessibility convention is "you can navigate
+        // to a dimmed item, you just can't activate it". DefaultLabel appends "unavailable"
+        // when the Selectable is not interactable. Also skip the raycast-blocked check since
+        // OnEnter runs synchronously off a Harmony postfix and layout may not be ready yet.
+        //
+        // interruptPrior=true (default, Tab transition): group name interrupts current speech
+        // then the item queues after. interruptPrior=false (initial OnEnter after the screen
+        // description was just spoken): group name and item both queue, so the description
+        // plays in full before the focus content.
+        for (int i = 0; i < m_items.Count; i++)
+        {
+            if (IsActiveInHierarchy(m_items[i]))
+            {
+                SetIndex(i, announce, interrupt: interruptPrior, announceGroup: true);
+                return;
+            }
+        }
+    }
+
+    // Focus the first row of the grid, preserving column where possible. Used by screen
+    // handlers on a Down-escape into this group from the section above — landing in the top
+    // row matches the visual flow (the new focus is the row closest to where the user came
+    // from). preferredColumn < 0 means "any" → falls back to leftmost.
+    public void FocusFirstRow(int preferredColumn = -1, bool announce = true, bool interruptPrior = true)
+    {
+        if (m_items.Count == 0) return;
+        // Per-section memory: if this section already has a focus position, return to it rather than
+        // recomputing from the section we came from. This keeps each section independent — navigating
+        // one section never shifts focus in another (the bug the preferredColumn projection caused).
+        // The column projection below is only the first-visit fallback (no remembered position yet).
+        if (RestoreRemembered(announce, interruptPrior)) return;
+        var rowEnd = Mathf.Min(Columns - 1, m_items.Count - 1);
+        var target = (preferredColumn < 0) ? 0 : Mathf.Min(preferredColumn, rowEnd);
+        if (IsActiveInHierarchy(m_items[target]))
+        {
+            SetIndex(target, announce, interrupt: interruptPrior, announceGroup: true);
+            return;
+        }
+        // Fallback: any navigable item in the first row.
+        for (int i = 0; i <= rowEnd; i++)
+            if (IsActiveInHierarchy(m_items[i]))
+            {
+                SetIndex(i, announce, interrupt: interruptPrior, announceGroup: true);
+                return;
+            }
+        // Nothing in the target row is focusable right now (a row the game has momentarily switched
+        // off). Fall back to any focusable item ANYWHERE in the group rather than returning with no
+        // focus at all — a row-only scan is why a one-item section could end up unfocused, silent
+        // and inescapable.
+        for (int i = 0; i < m_items.Count; i++)
+            if (IsActiveInHierarchy(m_items[i]))
+            {
+                SetIndex(i, announce, interrupt: interruptPrior, announceGroup: true);
+                return;
+            }
+    }
+
+    // Restore the section's own remembered focus (set the last time the user was in it) if it's still
+    // valid. Returns true when it did. Announces with the group name, so escaping into a section reads
+    // "<section>. <item>" just like a fresh entry. Used as the first step of FocusFirstRow/FocusLastRow
+    // so per-section position survives moving away and back.
+    private bool RestoreRemembered(bool announce, bool interruptPrior)
+    {
+        if (m_index >= 0 && m_index < m_items.Count && IsActiveInHierarchy(m_items[m_index]))
+        {
+            SetIndex(m_index, announce, interrupt: interruptPrior, announceGroup: true);
+            return true;
+        }
+        return false;
+    }
+
+    // Focus the last (visual) row, preserving column where possible. Used by screen handlers
+    // on an Up-escape into this group from the section below — landing in the bottom row
+    // matches the visual flow (closest to where the user came from), instead of jumping to
+    // the very top of the group.
+    public void FocusLastRow(int preferredColumn = -1, bool announce = true, bool interruptPrior = true)
+    {
+        if (m_items.Count == 0) return;
+        // Per-section memory first (see FocusFirstRow); column projection is the first-visit fallback.
+        if (RestoreRemembered(announce, interruptPrior)) return;
+        var lastRowStart = ((m_items.Count - 1) / Columns) * Columns;
+        var rowEnd = Mathf.Min(lastRowStart + Columns - 1, m_items.Count - 1);
+        var target = (preferredColumn < 0) ? lastRowStart : Mathf.Min(lastRowStart + preferredColumn, rowEnd);
+        if (IsActiveInHierarchy(m_items[target]))
+        {
+            SetIndex(target, announce, interrupt: interruptPrior, announceGroup: true);
+            return;
+        }
+        for (int i = lastRowStart; i <= rowEnd; i++)
+            if (IsActiveInHierarchy(m_items[i]))
+            {
+                SetIndex(i, announce, interrupt: interruptPrior, announceGroup: true);
+                return;
+            }
+        // Nothing in the target row is focusable right now (a row the game has momentarily switched
+        // off). Fall back to any focusable item ANYWHERE in the group rather than returning with no
+        // focus at all — a row-only scan is why a one-item section could end up unfocused, silent
+        // and inescapable.
+        for (int i = 0; i < m_items.Count; i++)
+            if (IsActiveInHierarchy(m_items[i]))
+            {
+                SetIndex(i, announce, interrupt: interruptPrior, announceGroup: true);
+                return;
+            }
+    }
+
+    // Re-apply Selectable.Select + re-announce on the currently-focused item. Used by screen
+    // handlers on OnResume to restore the player's position after a modal closes. Falls back
+    // to FocusFirst if the saved index is no longer valid (item destroyed / removed).
+    public void RefocusCurrent(bool announce = true, bool interrupt = true)
+    {
+        if (m_index >= 0 && m_index < m_items.Count && IsActiveInHierarchy(m_items[m_index]))
+        {
+            m_items[m_index].Select();
+            // interrupt:false lets a caller QUEUE the item after a preamble it just spoke (e.g. a
+            // modal speaking its body, then re-announcing the focused button after it) instead of
+            // barging over that preamble. Defaults to true so existing callers are unchanged.
+            if (announce) Speak(interrupt);
+            return;
+        }
+        FocusFirst(announce);
+    }
+
+    public void MoveNext() => MoveBy(+1);
+    public void MovePrev() => MoveBy(-1);
+
+    public bool Activate(bool isSpaceKey = false)
+    {
+        var sel = Current;
+        if (!IsUsable(sel)) return false;
+        if (sel is Toggle toggle)
+        {
+            if (RadioToggleMode)
+            {
+                // Tab / radio semantics: Enter or Space selects; "un-selecting" the active tab
+                // is meaningless. Setting isOn drives the shared ToggleGroup (turns the old tab
+                // off) and fires the game's onValueChanged → the real view switch.
+                if (!toggle.isOn) toggle.isOn = true;
+                Speak(interrupt: true);   // re-announce; the item now reads as selected
+                return true;
+            }
+            // Checkbox semantics (default): Space toggles, Enter is a no-op (web/desktop convention).
+            if (!isSpaceKey) return false;
+            toggle.isOn = !toggle.isOn;
+            // Just speak the new state — user already knows which checkbox they pressed.
+            Output(LocalizationUtils.Get(toggle.isOn ? LocalizationKey.GLOBAL_CHECKED : LocalizationKey.GLOBAL_UNCHECKED), interrupt: true);
+            return true;
+        }
+        if (sel is Button btn)
+        {
+            btn.onClick?.Invoke();
+            return true;
+        }
+        ExecuteEvents.Execute(sel!.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+        return true;
+    }
+
+    // Call from the owning component's HandleInput. True when a key was used.
+    public bool HandleInput()
+    {
+        // Back input runs even when there are no items in the list — a "OK only" popup with no
+        // navigable buttons should still be dismissable by Escape if the handler wired OnBack.
+        if (AccessibleKey.ESCAPE.IsPressed() || (AccessibleKey.BACK.IsPressed() && !IsTextInputFocused()))
+        {
+            if (OnBack == null) return false;
+            OnBack();
+            return true;
+        }
+
+        if (m_items.Count == 0) return false;
+
+        // Keep a focused text field actually in editing mode. A field that appeared this frame (an
+        // overlay that just opened / is still fading in) can swallow the initial ActivateInputField,
+        // leaving it highlighted but INERT — typed keys don't reach it, so nothing enters and the
+        // echo never fires. Re-activating until it reports isFocused self-heals that race (and a
+        // focus we lost to a stray click) for every text field, not just one screen.
+        EnsureCurrentFieldActivated();
+
+        // While the focus is in a text field, arrows / Enter / Space belong to the FIELD (caret
+        // movement, a typed space, submit) — never nav, or you'd be ejected from the field before
+        // you could type. Tab still moves (so AllowTab groups exit the field); Escape / Backspace
+        // were handled above. Handlers that own Tab themselves (section-stack screens) give the
+        // user a Tab-to-exit by checking CurrentIsTextField.
+        bool editing = CurrentIsTextField;
+        if (editing) PollCaretEcho();   // voice the character the caret crosses on Left/Right
+
+        if (AllowTab && AccessibleKey.NEXT_SECTION.IsPressed()) MoveNext();
+        else if (AllowTab && AccessibleKey.PREV_SECTION.IsPressed()) MovePrev();
+        else if (!editing && AllowVertical && AccessibleKey.READ_NEXT_MENU_OPTION.IsPressed())
+        {
+            // Grid layouts: jump by Columns so Down lands in the column below. For partial
+            // last rows (e.g. 6 items in a 5-column grid) MoveVerticalInGrid clamps the
+            // target column to whatever the target row actually has, so Down from Face 2
+            // through Face 5 still reaches Face 6 instead of being a no-op.
+            MoveVerticalInGrid(+1);
+        }
+        else if (!editing && AllowVertical && AccessibleKey.READ_PREV_MENU_OPTION.IsPressed())
+        {
+            MoveVerticalInGrid(-1);
+        }
+        else if (!editing && AllowHorizontal && AccessibleKey.READ_NEXT_ITEM.IsPressed())
+        {
+            // sameRowOnly: in a grid, Right from the last item of a row must NOT wrap to
+            // the first item of the next row. For flat horizontal strips Columns equals
+            // the row length, so "same row" includes every item — wrapping was never
+            // possible there anyway.
+            MoveBy(1, sameRowOnly: true);
+        }
+        else if (!editing && AllowHorizontal && AccessibleKey.READ_PREV_ITEM.IsPressed())
+        {
+            MoveBy(-1, sameRowOnly: true);
+        }
+        else if (!editing && AccessibleKey.CONFIRM.IsPressed())   // CONFIRM covers the keypad Enter too
+        {
+            Activate(isSpaceKey: false);
+        }
+        else if (!editing && AccessibleKey.SPACE.IsPressed())
+        {
+            Activate(isSpaceKey: true);
+        }
+        else return false;
+        return true;
+    }
+
+    // True when the focused item is a text input — used here to hand keys to the field, and by
+    // section-stack handlers to switch Tab from "cycle sections" to "exit the field".
+    public bool CurrentIsTextField => IsTextField(Current);
+
+    // Grid-aware vertical move: stays in the same column when possible, but if the target
+    // row is partial and doesn't have that column, clamps to the row's last item. Mirrors
+    // how Windows ListView and most native grid widgets handle partial-row navigation —
+    // Down should never be a silent no-op as long as the target row has *anything* in it.
+    private void MoveVerticalInGrid(int direction)
+    {
+        if (m_items.Count == 0 || Columns <= 0) return;
+        if (m_index < 0)
+        {
+            // No selection yet — just focus first navigable.
+            FocusFirst(announce: true, interruptPrior: true);
+            return;
+        }
+        int currentRow = m_index / Columns;
+        int currentCol = m_index % Columns;
+        int targetRow = currentRow + direction;
+        if (targetRow < 0) return;
+        // Walk row by row in the direction of travel. Stopping at the first row that has nothing
+        // navigable in it was wrong: the game switches individual controls off, and one dead row
+        // then swallowed the arrow entirely — no move, no speech, and (because the group still
+        // reported itself mid-list) no section escape either.
+        for (; targetRow >= 0; targetRow += direction)
+        {
+            int rowStart = targetRow * Columns;
+            if (rowStart >= m_items.Count) return;
+            int rowLastIndex = Mathf.Min(rowStart + Columns - 1, m_items.Count - 1);
+            int targetIndex = Mathf.Min(rowStart + currentCol, rowLastIndex);
+            // Honour the same filter as linear MoveBy — fall back to walking toward the row start
+            // if the precise cell is blocked, so we still land *somewhere* in the target row.
+            for (int probe = targetIndex; probe >= rowStart && probe <= rowLastIndex; probe--)
+                if (IsNavigable(m_items[probe]))
+                {
+                    if (probe == m_index) return;
+                    SetIndex(probe, announce: true, interrupt: true, announceGroup: false);
+                    return;
+                }
+        }
+    }
+
+    private void MoveBy(int delta, bool sameRowOnly = false)
+    {
+        if (m_items.Count == 0) return;
+        // No wrap: stop silently at the ends of the list. Only Tab between groups wraps; that's
+        // a screen-handler concern, not the per-group navigator. Across-the-board rule — menus,
+        // dialogs, anywhere — pressing past the last item just does nothing.
+        int startIndex = m_index < 0 ? (delta > 0 ? 0 : m_items.Count - 1) : m_index;
+        int currentRow = (m_index < 0) ? -1 : m_index / Columns;
+        int next = (m_index < 0) ? startIndex : m_index + delta;
+        while (next >= 0 && next < m_items.Count)
+        {
+            // For horizontal moves in a grid, stop at the row boundary — Right from the last
+            // column shouldn't wrap to the first column of the next row.
+            if (sameRowOnly && currentRow >= 0 && next / Columns != currentRow) return;
+            // Use IsNavigable: skip dead and overlay-blocked items, but allow disabled (non-
+            // interactable) ones so the user can still find a dimmed button and hear why.
+            if (IsNavigable(m_items[next])) { SetIndex(next, announce: true, interrupt: true, announceGroup: false); return; }
+            next += delta;
+        }
+    }
+
+    private void SetIndex(int i, bool announce, bool interrupt, bool announceGroup)
+    {
+        UnwireEcho();
+        m_index = i;
+        var sel = m_items[m_index];
+        if (sel != null) { sel.Select(); ActivateIfInputField(sel); WireEcho(sel); }
+        if (!announce) return;
+        if (announceGroup && !string.IsNullOrEmpty(GroupName))
+        {
+            Output(GroupName!, interrupt: interrupt);  // interrupt prior or queue, per caller
+            Speak(interrupt: false);                         // item label always queues after the group name
+        }
+        else
+        {
+            Speak(interrupt);
+        }
+    }
+
+    // Most permissive: GameObject is in active hierarchy. Used by FocusFirst — initial focus
+    // shouldn't be denied due to layout-timing races or temporary disabled state.
+    private static bool IsActiveInHierarchy(Selectable? s)
+    {
+        return s != null && s.isActiveAndEnabled;
+    }
+
+    // Active item — caller decides whether the raycast/overlay check matters. Modal screens
+    // pause the underlying screen via the router so the overlay-blocking check isn't needed
+    // here; including it bites accessibility cases like the FTUE top blocker, where the
+    // game reparents HOME above an invisible blocker that covers all other tabs — raycast
+    // at DECKS hits the blocker, MoveBy refuses to advance, and the user can't navigate the
+    // top strip even though every tab's Selectable is still interactable.
+    private bool IsNavigable(Selectable? s)
+    {
+        return IsActiveInHierarchy(s);
+    }
+
+    // Fully usable: active, interactable, not blocked. Used by Activate — pressing Enter on
+    // a disabled item is a no-op (just like clicking a dimmed button).
+    private bool IsUsable(Selectable? s)
+    {
+        if (!IsNavigable(s)) return false;
+        return s!.interactable;
+    }
+
+    // Selecting a text field highlights it but doesn't start editing — uGUI needs the field
+    // *activated* before it captures typed characters and shows a caret. So on focus we activate
+    // any InputField, the way a mouse click would, so the user can type immediately (redeem code,
+    // deck name, search box). Moving focus away deselects it, which ends editing.
+    private static void ActivateIfInputField(Selectable s)
+    {
+        if (s is TMPro.TMP_InputField tmp) tmp.ActivateInputField();
+        else if (s is InputField legacy) legacy.ActivateInputField();
+    }
+
+    // If the current item is a text field that isn't actually in editing mode, (re)activate it. This
+    // is idempotent once the field reports isFocused, so it costs nothing in the steady state — it
+    // only fires on the frames between "we selected the field" and "the field finally captured input"
+    // (the activation race on a just-opened / still-animating overlay). A non-interactable field is
+    // left alone (its CanvasGroup may still be fading in; we retry next frame once it's interactable).
+    private void EnsureCurrentFieldActivated()
+    {
+        var sel = Current;
+        if (sel == null || !sel.IsInteractable()) return;   // IsInteractable() also honours CanvasGroup fade-in
+        if (sel is TMPro.TMP_InputField tmp)
+        {
+            if (!tmp.isFocused) { tmp.Select(); tmp.ActivateInputField(); }
+        }
+        else if (sel is InputField legacy)
+        {
+            if (!legacy.isFocused) { legacy.Select(); legacy.ActivateInputField(); }
+        }
+    }
+
+    // Speak each character as it's typed into the focused field (Unity input fields get no OS-level
+    // echo, so a blind user otherwise types blind). Wired on focus, removed when focus leaves.
+    private void WireEcho(Selectable? s)
+    {
+        if (s is TMPro.TMP_InputField tmp)
+        {
+            m_echoTmp = tmp;
+            m_echoPrev = tmp.text ?? string.Empty;
+            tmp.onValueChanged.AddListener(OnEchoChanged);
+        }
+        else if (s is InputField legacy)
+        {
+            m_echoLegacy = legacy;
+            m_echoPrev = legacy.text ?? string.Empty;
+            legacy.onValueChanged.AddListener(OnEchoChanged);
+        }
+        m_caretPrev = -1;
+        m_caretPrevText = m_echoPrev;
+    }
+
+    private void UnwireEcho()
+    {
+        if (m_echoTmp != null) { m_echoTmp.onValueChanged.RemoveListener(OnEchoChanged); m_echoTmp = null; }
+        if (m_echoLegacy != null) { m_echoLegacy.onValueChanged.RemoveListener(OnEchoChanged); m_echoLegacy = null; }
+        m_echoPrev = string.Empty;
+        m_caretPrev = -1;
+        m_caretPrevText = string.Empty;
+    }
+
+    // Release every listener this navigator attached to game objects. Right now that's only the
+    // focused input field's character-echo hook — which lives on the FIELD's UnityEvent, so it
+    // outlives the navigator. A handler that discards a navigator while a field is still focused
+    // (e.g. a group-stack screen doing groups.Clear() to rebuild) must Detach it first, or the dead
+    // navigator is kept alive by the field and its OnEchoChanged fires alongside the new one — every
+    // typed character then speaks twice, three times, once per rebuild. Idempotent and safe to call
+    // when no field is wired.
+    public void Detach() => UnwireEcho();
+
+    private void OnEchoChanged(string newText)
+    {
+        newText ??= string.Empty;
+        if (newText.Length > m_echoPrev.Length && newText.StartsWith(m_echoPrev))
+            Output(EchoText(newText.Substring(m_echoPrev.Length)), interrupt: true);
+        else if (newText.Length < m_echoPrev.Length && m_echoPrev.StartsWith(newText))
+            Output(LocalizationUtils.Format(LocalizationKey.NAV_ECHO_DELETED_FORMAT, EchoText(m_echoPrev.Substring(newText.Length))), interrupt: true);
+        else if (newText.Length != m_echoPrev.Length)
+            Output(LocalizationUtils.Get(newText.Length > m_echoPrev.Length ? LocalizationKey.NAV_ECHO_INSERTED : LocalizationKey.NAV_ECHO_DELETED), interrupt: true);
+        m_echoPrev = newText;
+    }
+
+    // Speak the character the caret crosses on Left/Right (Unity gives no caret read-out). Polled
+    // each frame while a field is focused: when the caret moves but the text is unchanged (pure
+    // caret nav, not typing — typing is voiced by OnEchoChanged), announce the crossed character.
+    private void PollCaretEcho()
+    {
+        var (text, caret) = GetTextAndCaret();
+        if (caret < 0) return;
+        if (text != m_caretPrevText) { m_caretPrevText = text; m_caretPrev = caret; return; }  // typing — handled elsewhere
+        if (m_caretPrev >= 0 && caret != m_caretPrev)
+        {
+            int lo = Mathf.Min(caret, m_caretPrev);
+            if (Mathf.Abs(caret - m_caretPrev) == 1 && lo >= 0 && lo < text.Length)
+                Output(EchoText(text[lo].ToString()), interrupt: true);   // the character crossed
+            else if (caret >= 0 && caret < text.Length)
+                Output(EchoText(text[caret].ToString()), interrupt: true);
+            else
+                Output(LocalizationUtils.Get(caret >= text.Length ? LocalizationKey.NAV_CARET_END : LocalizationKey.NAV_CARET_START), interrupt: true);
+        }
+        m_caretPrev = caret;
+        m_caretPrevText = text;
+    }
+
+    private (string text, int caret) GetTextAndCaret()
+    {
+        if (m_echoTmp != null) return (m_echoTmp.text ?? string.Empty, m_echoTmp.caretPosition);
+        if (m_echoLegacy != null) return (m_echoLegacy.text ?? string.Empty, m_echoLegacy.caretPosition);
+        return (string.Empty, -1);
+    }
+
+    private static string EchoText(string s)
+    {
+        s = s.Trim();
+        return s.Length == 0 ? LocalizationUtils.Get(LocalizationKey.NAV_ECHO_SPACE) : s;
+    }
+
+    // Don't eat Backspace if the user is typing in a text field (deck name editor, search box, etc.).
+    // Escape is still fine in those — desktop convention is "escape cancels the field/dialog".
+    // Also used by the global letter/digit shortcuts so they never hijack a typed character.
+    public static bool IsTextInputFocused()
+    {
+        var es = EventSystem.current;
+        if (es == null) return false;
+        var sel = es.currentSelectedGameObject;
+        if (sel == null) return false;
+        return sel.GetComponent<InputField>() != null || sel.GetComponent<TMPro.TMP_InputField>() != null;
+    }
+
+    // False when something else is on top of this Selectable in screen space (modal blur,
+    // popup blocker, in-game overlay). Uses uGUI's own raycast so it matches what the game's
+    // click handlers see — a button you can't click with the mouse is one we shouldn't navigate to.
+    // Screens filter their groups with it at rebuild time.
+    public static bool IsRaycastReachable(Selectable s)
+    {
+        var es = EventSystem.current;
+        if (es == null) return true;
+        return IsRaycastReachable(s, new PointerEventData(es), new List<RaycastResult>(8));
+    }
+
+    private static bool IsRaycastReachable(Selectable s, PointerEventData pointer, List<RaycastResult> results)
+    {
+        if (s == null) return false;
+        var es = EventSystem.current;
+        if (es == null) return true;
+        if (s.transform is not RectTransform rect) return true;
+
+        var corners = new Vector3[4];
+        rect.GetWorldCorners(corners);
+        var worldCenter = (corners[0] + corners[2]) * 0.5f;
+
+        Camera? cam = null;
+        var canvas = s.GetComponentInParent<Canvas>();
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera;
+
+        var screenPoint = RectTransformUtility.WorldToScreenPoint(cam!, worldCenter);
+
+        pointer.position = screenPoint;
+        results.Clear();
+        es.RaycastAll(pointer, results);
+
+        // No hits typically means layout hasn't computed yet; lenient pass so first-frame
+        // RebuildGroups doesn't strip everything before layout settles.
+        if (results.Count == 0) return true;
+
+        var top = results[0].gameObject;
+        for (var t = top != null ? top.transform : null; t != null; t = t.parent)
+        {
+            if (t.gameObject == s.gameObject) return true;
+        }
+        return false;
+    }
+
+    private void Speak(bool interrupt)
+    {
+        var sel = Current;
+        if (sel == null) return;
+        var label = m_resolveLabel(sel);
+        // A text field is announced by its label alone — it's not a numbered list item, and it's
+        // excluded from the "X of Y" the other items report (so a field among 4 buttons leaves them
+        // reading "1 of 4", not "of 5").
+        if (IsTextField(sel)) { Output(label, interrupt); return; }
+        int total = 0, index = 0;
+        for (int i = 0; i < m_items.Count; i++)
+        {
+            if (IsTextField(m_items[i])) continue;
+            total++;
+            if (i <= m_index) index = total;
+        }
+        Output(Announce.Item(label, description: null, index: index, total: total), interrupt);
+    }
+
+    private static bool IsTextField(Selectable? s) => s is TMPro.TMP_InputField || s is InputField;
+
+    public static string DefaultLabel(Selectable s)
+    {
+        // A text input announces its purpose (placeholder/label) + current contents + the "edit
+        // field" role, so the user knows it's typable and can review what they've entered.
+        if (s is TMPro.TMP_InputField || s is InputField)
+            return InputFieldLabel(s);
+
+        var label = ResolveBaseLabel(s);
+        if (s is Toggle toggle)
+        {
+            label = Announce.WithState(label, toggle.isOn ? LocalizationKey.GLOBAL_CHECKED : LocalizationKey.GLOBAL_UNCHECKED);
+            // The game makes the SELECTED tab/toggle non-interactable so it can't be re-picked — that's
+            // "already selected" (announced as checked), NOT "unavailable". Only flag a non-selected
+            // toggle that's genuinely disabled.
+            if (!toggle.isOn && !s.interactable) label = Announce.WithState(label, LocalizationKey.GLOBAL_DISABLED);
+        }
+        else if (!s.interactable)
+            label = Announce.WithState(label, LocalizationKey.GLOBAL_DISABLED);
+        return label;
+    }
+
+    private static string InputFieldLabel(Selectable s)
+    {
+        string? placeholder = null, text = null;
+        if (s is TMPro.TMP_InputField tmp)
+        {
+            text = tmp.text;
+            if (tmp.placeholder is TMPro.TMP_Text ph) placeholder = ph.text;
+        }
+        else if (s is InputField legacy)
+        {
+            text = legacy.text;
+            if (legacy.placeholder is Text ph) placeholder = ph.text;
+        }
+        var name = !string.IsNullOrWhiteSpace(placeholder) ? placeholder!.Trim() : Humanize(s.gameObject.name);
+        var content = string.IsNullOrWhiteSpace(text) ? LocalizationUtils.Get(LocalizationKey.NAV_FIELD_BLANK) : text!.Trim();
+        var label = LocalizationUtils.Format(LocalizationKey.NAV_EDIT_FIELD_FORMAT, name, content);
+        if (!s.interactable) label = Announce.WithState(label, LocalizationKey.GLOBAL_DISABLED);
+        return label;
+    }
+
+    public static string ResolveBaseLabel(Selectable s)
+    {
+        // Composite widgets whose meaning is more than one text child — e.g. a shop product tile,
+        // where the focused control's own text is just a price/icon. UiLabels reads the owning
+        // controller (name + price). Wins over everything else.
+        var rich = UiLabels.Describe(s);
+        if (rich != null) return rich;
+
+        // Game-specific friendly name for icon-only / badge-only buttons (e.g. the Battle Pass
+        // shortcut whose only text child is a "1" notification badge — see UiLabels).
+        var friendly = UiLabels.Friendly(s.gameObject.name);
+        if (friendly != null) return friendly;
+
+        // Prefer a real worded label: the first text child that contains a letter. This skips a
+        // leading numeric notification badge so a labelled button reads by its name, not its count.
+        foreach (var t in s.GetComponentsInChildren<TMP_Text>(includeInactive: false))
+            if (HasLetter(t.text)) return t.text;
+        foreach (var t in s.GetComponentsInChildren<Text>(includeInactive: false))
+            if (HasLetter(t.text)) return t.text;
+
+        // Still no worded label — an icon-only control. Before falling back to its prefab
+        // GameObject name, ask what the prefab wired its onClick to: for the handful of icon
+        // buttons we've traced in the decompiled source, the game method IS the meaning (the ✎
+        // beside a deck name calls Settings_BeginNameChange → "Rename deck"). See UiLabels.
+        var byAction = UiLabels.ByAction(s);
+        if (byAction != null) return byAction;
+
+        // No worded label — fall back to any non-empty text (e.g. a shop price "200", a count).
+        // For a number-only control that text IS the meaningful label, so prefer it over the
+        // generic humanized GameObject name ("Button"). Badge-bearing buttons that DO have a real
+        // name are caught above (letter text) or by the friendly map, so this only fires when the
+        // number is genuinely all there is. Skip progress fractions ("11/122") — those are
+        // collection/quest counters, never a control's name or price, and mislead as a label.
+        foreach (var t in s.GetComponentsInChildren<TMP_Text>(includeInactive: false))
+            if (IsLabelish(t.text)) return t.text.Trim();
+        foreach (var t in s.GetComponentsInChildren<Text>(includeInactive: false))
+            if (IsLabelish(t.text)) return t.text.Trim();
+
+        return Humanize(s.gameObject.name);
+    }
+
+    private static bool IsLabelish(string? s)
+        => !string.IsNullOrWhiteSpace(s) && !s!.Contains("/");
+
+    private static bool HasLetter(string? s)
+    {
+        if (string.IsNullOrEmpty(s)) return false;
+        foreach (var c in s!) if (char.IsLetter(c)) return true;
+        return false;
+    }
+
+    // Turn a prefab GameObject name into something speakable for icon-only controls: drop
+    // Button/Btn affixes and split CamelCase / snake_case into words. "ExpansionChallengeButton"
+    // → "Expansion Challenge", "Btn_Rank" → "Rank". Used only when a control has no readable
+    // text label of its own.
+    private static string Humanize(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        name = StripPrefabSuffix(name);
+        foreach (var pre in s_prefabPrefixes)
+            if (name.Length > pre.Length && name.StartsWith(pre, StringComparison.OrdinalIgnoreCase))
+            { name = name.Substring(pre.Length).TrimStart('_', ' '); break; }
+        name = name.Replace('_', ' ');
+
+        var sb = new StringBuilder(name.Length + 4);
+        for (int i = 0; i < name.Length; i++)
+        {
+            var c = name[i];
+            if (i > 0 && char.IsUpper(c) && !char.IsUpper(name[i - 1]) && name[i - 1] != ' ')
+                sb.Append(' ');
+            sb.Append(c);
+        }
+        return sb.ToString().Trim();
+    }
+
+    private static string StripPrefabSuffix(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        foreach (var suffix in s_prefabSuffixes)
+        {
+            if (name.Length > suffix.Length && name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                return name.Substring(0, name.Length - suffix.Length).TrimEnd('_', ' ');
+        }
+        return name;
+    }
+
+    private static readonly string[] s_prefabSuffixes = { "_Button", " Button", "Button", "_Btn", " Btn", "Btn" };
+    private static readonly string[] s_prefabPrefixes = { "Btn_", "Button_", "Btn", "Button" };
+}
