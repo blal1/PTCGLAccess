@@ -1,8 +1,10 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using MatchLogic;
 using TMPro;
+using TPCI.Coroutines;
 using TPCI.UI.MenuCarousel;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,8 +26,9 @@ namespace Accessibility;
 //
 // Digits are left to the global HubTabShortcuts (see HubUi): nothing here reads number keys.
 //
-// Not ported yet: the previous mod's FTUE coordination (collapse to the tutorial's highlighted button, stay silent
-// while the tutorial speaks). It depends on the FTUE hook, ported with the popups.
+// FTUE (tutorial): when the tutorial highlights a button here, the screen collapses to that one button (all the
+// game's input blocker lets a sighted player click), follows it when the highlight moves, and stays silent while a
+// tutorial dialogue speaks — same model as AccessibleProfile, state from FtueTracker.
 internal sealed class AccessibleHome : AccessibleScreen
 {
     private static readonly AccessibleHome s_instance = new();
@@ -50,6 +53,7 @@ internal sealed class AccessibleHome : AccessibleScreen
     {
         // A drill-in / back inside the Learning Lab re-runs SetupDisplay; forward it to the live section.
         LearningLabSection.LevelChanged += OnLearningLabLevelChanged;
+        FtueTracker.FocusedElementChanged += OnFtueFocusChanged;
     }
 
     // LEARN (the Learning Lab game-mode tab) is the selected mode. ChangeToLearningLabs sets this (GameplayType.Offline)
@@ -79,6 +83,7 @@ internal sealed class AccessibleHome : AccessibleScreen
         private static void Postfix(HUBPlayScreenController __instance)
         {
             if (s_instance.m_controller != __instance) return;
+            s_instance.CancelFtueSettlementWait();
             s_instance.m_controller = null;
             s_instance.m_activeGroup = -1;
             AccessibilityMgr.ClearScreen(s_instance);
@@ -97,8 +102,32 @@ internal sealed class AccessibleHome : AccessibleScreen
     // player's place, and say "Home" then the focused item.
     public void OnGainedFocus()
     {
+        CancelFtueSettlementWait();
+        // FTUE-focused element wins: if the tutorial has highlighted a specific button on us, point our nav at just
+        // that (mirrors AccessibleProfile).
+        if (FtueTracker.FtueIsRunning && FtueTracker.FocusedElement is { } target && target.isActiveAndEnabled)
+        {
+            RebuildForFtue();
+            return;
+        }
+
         var prevIndex = m_activeGroup >= 0 && m_activeGroup < m_groups.Count ? m_groups[m_activeGroup].Index : -1;
         RebuildGroups();
+        if (FtueTracker.FtueIsRunning)
+        {
+            // Land silently, then let the FTUE state machine settle: a speech-claiming state means the tutorial
+            // dialogue owns speech; otherwise WaitForFtueToSettle announces.
+            if (m_groups.Count == 0) return;
+            if (m_activeGroup < 0 || m_activeGroup >= m_groups.Count) m_activeGroup = PickDefaultGroup();
+            FocusDefaultGroup(announce: false, interruptPrior: true);
+            m_ftueWait = AnywhereCoroutine.Instance.unmanaged.StartCoroutine(WaitForFtueToSettle());
+            return;
+        }
+        AnnounceFocus(prevIndex);
+    }
+
+    private void AnnounceFocus(int prevIndex)
+    {
         AccessibilityMgr.Output(this, LocalizationUtils.Get(LocalizationKey.HUB_HOME), interrupt: true);
         if (m_groups.Count == 0) return;
         if (m_activeGroup < 0 || m_activeGroup >= m_groups.Count)
@@ -125,15 +154,19 @@ internal sealed class AccessibleHome : AccessibleScreen
         // ASYNCHRONOUSLY: the content signature changes every frame while the old mode's panel animates out and the
         // new one animates in (PlayMode_In). So on every change we rebuild + keep focus SILENTLY, and only once the
         // content has stopped changing AND the animation has settled do we complete a pending Enter-on-tab dive —
-        // never landing on a transient (the "casual speaks info" bug).
-        var sig = ContentSig();
-        if (sig != m_lastContentSig)
+        // never landing on a transient (the "casual speaks info" bug). Gated off during FTUE, where focus is
+        // tutorial-driven (RebuildForFtue) and a rebuild would drop the coached button.
+        if (!FtueTracker.FtueIsRunning)
         {
-            m_lastContentSig = sig;
-            OnContentChanged();
-            return;
+            var sig = ContentSig();
+            if (sig != m_lastContentSig)
+            {
+                m_lastContentSig = sig;
+                OnContentChanged();
+                return;
+            }
+            if (m_pendingEnterContent && TryCompleteDive()) return;
         }
-        if (m_pendingEnterContent && TryCompleteDive()) return;
 
         if (m_groups.Count == 0) return;
 
@@ -488,6 +521,76 @@ internal sealed class AccessibleHome : AccessibleScreen
     {
         if (m_llSection != null && m_activeGroup >= 0 && m_activeGroup < m_groups.Count && ReferenceEquals(m_groups[m_activeGroup], m_llSection))
             m_llSection.OnLevelChanged();
+    }
+
+    #endregion
+
+    #region FTUE
+
+    private Coroutine? m_ftueWait;
+    private Selectable? m_lastFtueTarget;
+
+    private void CancelFtueSettlementWait()
+    {
+        if (m_ftueWait == null) return;
+        AnywhereCoroutine.Instance.unmanaged.StopCoroutine(m_ftueWait);
+        m_ftueWait = null;
+    }
+
+    // Wait for the FTUE state machine to commit after we gained focus (see AccessibleProfile.WaitForFtueToSettle):
+    // a speech-claiming state takes over (stay silent, the tutorial owns speech) or the animator settles with nothing
+    // claiming (announce normally). No frame counting — yield until a native condition resolves.
+    private IEnumerator WaitForFtueToSettle()
+    {
+        var mgr = FTUEManager.instance;
+        var animator = mgr != null ? mgr.GetComponent<Animator>() : null;
+        while (FtueTracker.FtueIsRunning && animator != null && !animator.enabled) yield return null;
+        yield return null;
+        m_ftueWait = null;
+        if (FtueTracker.FtueSpeechClaimingStateActive)
+        {
+            Log.Info("Home: FTUE speech-claim active, staying silent");
+            yield break;
+        }
+        if (m_controller != null && AccessibilityMgr.IsFocused(this)) AnnounceFocus(-1);
+    }
+
+    // FTUE has highlighted a specific button on this screen: collapse to a single-item nav of just that Selectable,
+    // matching what the tutorial's input blocker allows clicking. When the highlight is cleared, go back to the
+    // normal sections, silently (the tutorial is talking).
+    private void RebuildForFtue()
+    {
+        CancelFtueSettlementWait();
+        var target = FtueTracker.FocusedElement;
+        m_lastFtueTarget = target;
+        if (target == null || !target.isActiveAndEnabled)
+        {
+            OnContentChanged();
+            return;
+        }
+        m_groups.Clear();
+        m_tabGroupIndex = -1;
+        m_mainGroupIndex = -1;
+        m_llSection = null;
+        m_pendingEnterContent = false;
+        // Keep the content signature current (the game-mode tabs persist) so leaving FTUE doesn't trigger a spurious
+        // content-change rebuild on the first normal frame.
+        var gmc = GameModes;
+        m_modeTabs = gmc != null ? gmc.GetComponentsInChildren<PageDragTab>(includeInactive: false) : null;
+        m_lastContentSig = ContentSig();
+        // A coached Toggle is a tab, so Enter must SELECT it — see FtueTracker.
+        AddGroup(new List<Selectable> { target }, radioMode: target is Toggle);
+        m_activeGroup = 0;
+        m_groups[0].FocusFirst(announce: true, interruptPrior: true);
+    }
+
+    private static void OnFtueFocusChanged()
+    {
+        var self = s_instance;
+        // Only react while we're the focused screen; if a UI covers us, our next OnGainedFocus picks it up.
+        if (self.m_controller == null || AccessibilityMgr.CurrentScreen != self || !AccessibilityMgr.IsFocused(self)) return;
+        if (FtueTracker.FocusedElement == self.m_lastFtueTarget) return;
+        if (FtueTracker.FtueIsRunning) self.RebuildForFtue();
     }
 
     #endregion

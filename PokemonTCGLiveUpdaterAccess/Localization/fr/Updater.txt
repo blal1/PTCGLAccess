@@ -1,0 +1,3 @@
+TAG	TEXT	COMMENT
+UPDATER_HELP	Mise à jour du jeu. Flèches haut et bas ou Tab : passer d'un bouton à l'autre. Entrée ou Espace : appuyer. Échap : fermer les notes de version. La progression et les erreurs sont lues automatiquement.	F1 in the updater
+UPDATER_PROGRESS_FORMAT	{0} %	0=percent of the download, when the updater shows no progress text

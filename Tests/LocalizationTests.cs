@@ -7,23 +7,29 @@ using Xunit;
 
 namespace Tests;
 
-// Every LocalizationKey has English text, every text line has a key, and translations keep their placeholders.
+// Every LocalizationKey has English text, every text line has a key, and translations keep their placeholders —
+// for each mod project (the main mod and the updater mod), against that project's own keys and Localization folder.
 public class LocalizationTests
 {
-    private static readonly string LocalizationDir = Path.Combine(ModSources.ModDir, "Localization");
+    public static TheoryData<string> Projects => new(ModSources.SpeakingProjects);
+
+    private static IReadOnlyList<SyntaxTree> Trees(string project) =>
+        project == "PokemonTCGLiveAccess" ? ModSources.Trees : ModSources.Parse(ModSources.FindProjectDir(project));
 
     // Keys are declared as `new(nameof(KEY))` fields of the partial LocalizationKey class.
-    private static readonly HashSet<string> DeclaredKeys = ModSources.Trees
+    private static HashSet<string> DeclaredKeys(string project) => Trees(project)
         .SelectMany(t => t.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
         .Where(c => c.Identifier.Text == "LocalizationKey")
         .SelectMany(c => c.Members.OfType<FieldDeclarationSyntax>())
         .SelectMany(f => f.Declaration.Variables.Select(v => v.Identifier.Text))
         .ToHashSet();
 
-    private static Dictionary<string, (string Text, string File)> Load(string language)
+    private static string LocalizationDir(string project) => Path.Combine(ModSources.FindProjectDir(project), "Localization");
+
+    private static Dictionary<string, (string Text, string File)> Load(string project, string language)
     {
         var result = new Dictionary<string, (string, string)>();
-        foreach (var file in Directory.GetFiles(Path.Combine(LocalizationDir, language), "*.txt"))
+        foreach (var file in Directory.GetFiles(Path.Combine(LocalizationDir(project), language), "*.txt"))
         {
             var table = new LocalizationTable();
             table.Add(File.ReadAllText(file));
@@ -36,24 +42,27 @@ public class LocalizationTests
         return result;
     }
 
-    [Fact]
-    public void Every_key_has_english_text_and_every_english_line_has_a_key()
+    [Theory]
+    [MemberData(nameof(Projects))]
+    public void Every_key_has_english_text_and_every_english_line_has_a_key(string project)
     {
-        Assert.NotEmpty(DeclaredKeys);
-        var en = Load("en");
-        var missing = DeclaredKeys.Where(k => !en.ContainsKey(k)).OrderBy(k => k).ToList();
-        var orphans = en.Keys.Where(k => !DeclaredKeys.Contains(k)).OrderBy(k => k).ToList();
+        var declared = DeclaredKeys(project);
+        Assert.NotEmpty(declared);
+        var en = Load(project, "en");
+        var missing = declared.Where(k => !en.ContainsKey(k)).OrderBy(k => k).ToList();
+        var orphans = en.Keys.Where(k => !declared.Contains(k)).OrderBy(k => k).ToList();
         Assert.True(missing.Count == 0, "Keys without English text: " + string.Join(", ", missing));
         Assert.True(orphans.Count == 0, "English lines without a LocalizationKey: " + string.Join(", ", orphans));
     }
 
-    [Fact]
-    public void Translations_cover_english_and_keep_placeholders()
+    [Theory]
+    [MemberData(nameof(Projects))]
+    public void Translations_cover_english_and_keep_placeholders(string project)
     {
-        var en = Load("en");
-        foreach (var dir in Directory.GetDirectories(LocalizationDir).Select(Path.GetFileName).Where(l => l != "en"))
+        var en = Load(project, "en");
+        foreach (var dir in Directory.GetDirectories(LocalizationDir(project)).Select(Path.GetFileName).Where(l => l != "en"))
         {
-            var tr = Load(dir!);
+            var tr = Load(project, dir!);
             var untranslated = en.Keys.Where(k => !tr.ContainsKey(k)).OrderBy(k => k).ToList();
             Assert.True(untranslated.Count == 0, $"{dir}: no translation for " + string.Join(", ", untranslated));
             foreach (var (key, (text, file)) in tr)
@@ -65,10 +74,11 @@ public class LocalizationTests
     }
 
     // Lines spoken in the mod's own words must never be raw English string literals.
-    [Fact]
-    public void Nothing_speaks_a_string_literal()
+    [Theory]
+    [MemberData(nameof(Projects))]
+    public void Nothing_speaks_a_string_literal(string project)
     {
-        var offenders = ModSources.Trees
+        var offenders = Trees(project)
             .SelectMany(t => t.GetRoot().DescendantNodes().OfType<InvocationExpressionSyntax>()
                 .Where(c => c.Expression.ToString() is "AccessibilityMgr.Output" or "AccessibilityMgr.OutputNotification" or "Output")
                 .Where(c => c.ArgumentList.Arguments.Any(a =>

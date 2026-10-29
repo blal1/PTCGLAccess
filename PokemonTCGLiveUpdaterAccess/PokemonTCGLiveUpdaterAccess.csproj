@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Accessibility mod for the game's STANDALONE updater (Updater.exe): a separate Unity process with its own
+    Managed assemblies, launched before the game when a patch is pending. The main mod never loads there, which is
+    why the updater was silent. This second MelonLoader mod targets it ([MelonGame("pokemon", "Updater")], from its
+    app.info) and needs MelonLoader installed in the updater's own folder.
+
+    The updater lives in a version-stamped folder (Game\Updater\<version>\); override UpdaterVersion if it bumps:
+      dotnet build PokemonTCGLiveUpdaterAccess /p:UpdaterVersion=1.6.0
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>PokemonTCGLiveUpdaterAccess</AssemblyName>
+    <RootNamespace>Accessibility</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <DebugType>portable</DebugType>
+    <UpdaterVersion Condition="'$(UpdaterVersion)' == ''">1.5.0</UpdaterVersion>
+    <UpdaterDir>$(GameDir)\Updater\$(UpdaterVersion)</UpdaterDir>
+    <UpdaterManagedDir>$(UpdaterDir)\Updater_Data\Managed</UpdaterManagedDir>
+  </PropertyGroup>
+
+  <!-- Speech, window fix, log and localization are the main mod's own files, linked (not copied). -->
+  <ItemGroup>
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\Log.cs" Link="Shared\Log.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\Prism.cs" Link="Shared\Prism.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\ScreenReader.cs" Link="Shared\ScreenReader.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\TextProcessor.cs" Link="Shared\TextProcessor.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\WindowFix.cs" Link="Shared\WindowFix.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\Navigation\Announce.cs" Link="Shared\Announce.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\Localization\LocalizationKey.cs" Link="Shared\LocalizationKey.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\Localization\LocalizationKey.Common.cs" Link="Shared\LocalizationKey.Common.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\Localization\LocalizationTable.cs" Link="Shared\LocalizationTable.cs" />
+    <Compile Include="..\PokemonTCGLiveAccess\Accessibility\Localization\LocalizationUtils.cs" Link="Shared\LocalizationUtils.cs" />
+  </ItemGroup>
+
+  <!-- Spoken text: this mod's Updater.txt plus the main mod's Global.txt / Common.txt the linked files speak from. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\**\*.txt" LogicalName="Localization/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\PokemonTCGLiveAccess\Localization\**\Global.txt;..\PokemonTCGLiveAccess\Localization\**\Common.txt" LogicalName="Localization/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.0" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.6" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- The updater's own engine and game assemblies (not the game's), compiled against but never copied. -->
+  <ItemGroup>
+    <UpdaterAssembly Include="UnityEngine;UnityEngine.CoreModule;UnityEngine.UI;UnityEngine.UIModule;UnityEngine.InputLegacyModule;UnityEngine.TextRenderingModule;Unity.TextMeshPro;Assembly-CSharp;TPCILocalization;TPCILocalizationAPI" />
+    <Reference Include="@(UpdaterAssembly)" HintPath="$(UpdaterManagedDir)\%(Identity).dll" Private="false" />
+  </ItemGroup>
+
+  <!-- Installs itself into the updater's Mods folder (MelonLoader must be installed there), with prism.dll next to
+       Updater.exe. Never next to the previous mod: both would speak over each other. -->
+  <PropertyGroup>
+    <PreviousModInstalled>false</PreviousModInstalled>
+    <PreviousModInstalled Condition="Exists('$(UpdaterDir)\Mods\PokemonTCGLiveUpdaterAccessibility.dll') Or Exists('$(GameDir)\Mods\PokemonTCGLiveUpdaterAccessibility.dll') Or Exists('$(GameDir)\Mods\PokemonTCGLiveAccessibility.dll')">true</PreviousModInstalled>
+  </PropertyGroup>
+  <Target Name="DeployToGame" AfterTargets="Build" Condition="Exists('$(UpdaterDir)\Mods')">
+    <Copy Condition="!$(PreviousModInstalled)" SourceFiles="$(TargetPath)" DestinationFolder="$(UpdaterDir)\Mods" SkipUnchangedFiles="true" />
+    <Copy Condition="!$(PreviousModInstalled) And Exists('$(GameDir)\prism.dll')" SourceFiles="$(GameDir)\prism.dll" DestinationFolder="$(UpdaterDir)" SkipUnchangedFiles="true" />
+    <Message Condition="!$(PreviousModInstalled)" Importance="high" Text="Deployed $(TargetFileName) to $(UpdaterDir)\Mods" />
+    <Warning Condition="$(PreviousModInstalled)" Text="Not deployed: the previous mod (PokemonTCGLiveAccessibility.dll or PokemonTCGLiveUpdaterAccessibility.dll) is installed. Move it out of Mods to test this one." />
+  </Target>
+
+</Project>

@@ -1,0 +1,3 @@
+TAG	TEXT	COMMENT
+UPDATER_HELP	Game updater. Up and Down arrows or Tab: move between the buttons. Enter or Space: press. Escape: close the release notes. Progress and errors are read automatically.	F1 in the updater
+UPDATER_PROGRESS_FORMAT	{0}%	0=percent of the download, when the updater shows no progress text

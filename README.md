@@ -17,6 +17,8 @@ the mod's own code: no game files, assets or decompiled game code. **Never publi
   - `Accessibility/Screens/` — one component per game screen, with its `[HarmonyPatch]` hooks nested inside.
   - `Accessibility/Localization/` + `Localization/<language>/<Feature>.txt` — keyed, tab-separated text.
   - `Accessibility/Compat.cs`, `GameReflect.cs` — game-update breakage report.
+- `PokemonTCGLiveUpdaterAccess/` — a second small MelonLoader mod for the game's standalone updater (Updater.exe, its
+  own process); links the main mod's speech, window fix and localization files.
 - `CommonUtils/`, `LinkGameInstallation/`, `EnvironmentSetup/`, `Decompiler/` — developer tools.
 - `Tests/` — offline checks, no game launch.
 

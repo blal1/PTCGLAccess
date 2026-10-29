@@ -8,12 +8,17 @@ namespace Tests;
 // assemblies (metadata only: nothing from the game runs).
 internal static class ModSources
 {
-    public static readonly string ModDir = FindModDir();
+    public static readonly string ModDir = FindProjectDir("PokemonTCGLiveAccess");
 
-    public static readonly IReadOnlyList<SyntaxTree> Trees = Directory
-        .EnumerateFiles(ModDir, "*.cs", SearchOption.AllDirectories)
+    public static readonly IReadOnlyList<SyntaxTree> Trees = Parse(ModDir);
+
+    // Every project that ships spoken text: the main mod and the updater mod (its own files only, not the linked ones).
+    public static readonly string[] SpeakingProjects = { "PokemonTCGLiveAccess", "PokemonTCGLiveUpdaterAccess" };
+
+    public static IReadOnlyList<SyntaxTree> Parse(string dir) => Directory
+        .EnumerateFiles(dir, "*.cs", SearchOption.AllDirectories)
         .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
-        .Select(p => CSharpSyntaxTree.ParseText(File.ReadAllText(p), new CSharpParseOptions(LanguageVersion.Latest), path: Path.GetRelativePath(ModDir, p)))
+        .Select(p => CSharpSyntaxTree.ParseText(File.ReadAllText(p), new CSharpParseOptions(LanguageVersion.Latest), path: Path.GetRelativePath(dir, p)))
         .ToList();
 
     public static string? GameDir()
@@ -44,13 +49,13 @@ internal static class ModSources
         return s_compilation;
     }
 
-    private static string FindModDir()
+    public static string FindProjectDir(string project)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
-            var mod = Path.Combine(d.FullName, "PokemonTCGLiveAccess");
-            if (File.Exists(Path.Combine(mod, "PokemonTCGLiveAccess.csproj"))) return mod;
+            var dir = Path.Combine(d.FullName, project);
+            if (File.Exists(Path.Combine(dir, project + ".csproj"))) return dir;
         }
-        throw new InvalidOperationException("PokemonTCGLiveAccess project not found above the test binaries");
+        throw new InvalidOperationException($"{project} project not found above the test binaries");
     }
 }

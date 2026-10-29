@@ -1,8 +1,11 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using SharedLogicUtils.source.DataTypes;
+using TPCI.Coroutines;
 using TPCI.Localization;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,7 +36,12 @@ namespace Accessibility;
 // (same limitation as the shop's "view all" overlay). COLLECT ALL claims every earned reward regardless, which
 // covers the common case.
 //
-// Not ported yet: the previous mod's FTUE coordination (it depends on the FTUE hook, ported with the popups).
+// FTUE (the Battle Pass tutorial coaches the tier reward, elementPos 8 / TierZero): same model as AccessibleProfile —
+// collapse to the coached button, follow it when it moves, stay silent while the tutorial dialogue speaks.
+//
+// Battle-pass data (serverData, LoadedBattlePassData, tier rewards, the card database) can be half-loaded right after
+// the screen opens and throw. Those reads go through Safe(): the item is skipped, never the screen — ContentSig runs
+// every frame, so one throwing read there would otherwise kill all input (AccessibilityMgr only logs it).
 internal sealed class AccessibleExpansionChallenge : AccessibleScreen
 {
     private static readonly AccessibleExpansionChallenge s_instance = new();
@@ -48,6 +56,8 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
     private string m_lastContentSig = string.Empty;
     private int m_questsGroupIndex = -1;
     private int m_firstContentGroupIndex = -1;
+
+    private AccessibleExpansionChallenge() => FtueTracker.FocusedElementChanged += OnFtueFocusChanged;
 
     [HarmonyPatch(typeof(HUBExpansionChallengeScreenController), "OnActivate")]
     private static class ActivateHook
@@ -66,6 +76,7 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         private static void Postfix(HUBExpansionChallengeScreenController __instance)
         {
             if (s_instance.m_controller != __instance) return;
+            s_instance.CancelFtueSettlementWait();
             s_instance.m_controller = null;
             AccessibilityMgr.ClearScreen(s_instance);
         }
@@ -77,8 +88,28 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
     // The pass status, then the focused item (the daily quests on a fresh entry), positions kept otherwise.
     public void OnGainedFocus()
     {
+        CancelFtueSettlementWait();
+        if (FtueTracker.FtueIsRunning && FtueTracker.FocusedElement is { } target && target.isActiveAndEnabled)
+        {
+            RebuildForFtue();
+            return;
+        }
+
         var prevIndex = m_activeGroup >= 0 && m_activeGroup < m_groups.Count ? m_groups[m_activeGroup].Index : -1;
         RebuildGroups();
+        if (FtueTracker.FtueIsRunning)
+        {
+            if (m_groups.Count == 0) return;
+            if (m_activeGroup < 0 || m_activeGroup >= m_groups.Count) m_activeGroup = PickDefaultGroup();
+            m_groups[m_activeGroup].FocusFirst(announce: false);
+            m_ftueWait = AnywhereCoroutine.Instance.unmanaged.StartCoroutine(WaitForFtueToSettle());
+            return;
+        }
+        AnnounceFocus(prevIndex);
+    }
+
+    private void AnnounceFocus(int prevIndex)
+    {
         AccessibilityMgr.Output(this, PassStatus(), interrupt: true);
         if (m_groups.Count == 0) return;
         if (m_activeGroup < 0 || m_activeGroup >= m_groups.Count)
@@ -100,9 +131,8 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
             return;
         }
         // React to a content change (quests refreshed, a reward claimed, a level-up scrolling the tier track) by
-        // rebuilding the section list, silently, keeping the place.
-        var sig = ContentSig();
-        if (sig != m_lastContentSig)
+        // rebuilding the section list, silently, keeping the place. Gated off during FTUE (tutorial-driven focus).
+        if (!FtueTracker.FtueIsRunning && ContentSig() != m_lastContentSig)
         {
             OnContentChanged();
             return;
@@ -211,10 +241,11 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
     private string ContentSig()
     {
         if (m_controller == null) return "none";
-        var sd = m_controller.serverData;
+        var c = m_controller;
+        var sd = c.serverData;
         var unlocked = sd != null ? sd.highestUnlockedRank : -1;
-        var claimed = sd?.highestRedeemedRank != null ? sd.highestRedeemedRank.GetHighestClaimedRewardsTier() : -1;
-        var tiles = m_controller.tiers != null && m_controller.tiers.Scroller != null ? m_controller.tiers.Scroller.ActiveCellViews.Count : 0;
+        var claimed = Safe(() => sd?.highestRedeemedRank != null ? sd.highestRedeemedRank.GetHighestClaimedRewardsTier() : -1, -1);
+        var tiles = Safe(() => c.tiers != null && c.tiers.Scroller != null ? c.tiers.Scroller.ActiveCellViews.Count : 0, 0);
         var collectAll = CollectAllButton() is { } ca && ca.isActiveAndEnabled;
         var quests = string.Concat(QuestPanels().Select(p => !p.gameObject.activeInHierarchy ? "-"
             : Active(ReadField<GameObject>(p, "readyToCollectHolder")) ? "R" : Active(ReadField<GameObject>(p, "comeBackLaterHolder")) ? "C" : "P"));
@@ -309,7 +340,8 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         var parts = new List<string> { LocalizationUtils.Get(LocalizationKey.UI_BATTLE_PASS) };
         if (m_controller != null)
         {
-            var bp = m_controller.builder != null ? m_controller.builder.LoadedBattlePassData : null;
+            var c = m_controller;
+            var bp = Safe(() => c.builder != null ? c.builder.LoadedBattlePassData : null, null);
             if (bp != null && Loc("tcg_" + (bp.ExpansionId ?? "").ToLowerInvariant()) is { } name) parts.Add(name);
             var timeLeft = m_controller.header != null ? m_controller.header.timeLeft : null;
             if (timeLeft != null && HubUi.Text(ReadField<LocText>(timeLeft, "timeLeftText")) is { } t)
@@ -381,7 +413,8 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         var parts = new List<string>();
         var num = HubUi.Text(view.indexTxt_Unlocked) ?? HubUi.Text(view.indexTxt_Locked);
         parts.Add(num == null ? LocalizationUtils.Get(LocalizationKey.HUB_TIER) : LocalizationUtils.Format(LocalizationKey.HUB_TIER_FORMAT, num));
-        var rewards = m_controller != null && m_controller.tiers != null ? DescribeRewards(m_controller.tiers.GetRewards(view.rank, view.rank)) : "";
+        var tiers = m_controller != null ? m_controller.tiers : null;
+        var rewards = tiers != null ? Safe(() => DescribeRewards(tiers.GetRewards(view.rank, view.rank)), "") : "";
         if (rewards.Length > 0) parts.Add(rewards);
         if (TierState(view.rank) is { } state) parts.Add(state);
         return string.Join(", ", parts);
@@ -391,7 +424,7 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
     {
         var sd = m_controller != null ? m_controller.serverData : null;
         if (sd == null) return null;
-        if (sd.highestRedeemedRank != null && sd.highestRedeemedRank.GetHighestClaimedRewardsTier() >= rank) return LocalizationUtils.Get(LocalizationKey.HUB_CLAIMED);
+        if (Safe(() => sd.highestRedeemedRank != null && sd.highestRedeemedRank.GetHighestClaimedRewardsTier() >= rank, false)) return LocalizationUtils.Get(LocalizationKey.HUB_CLAIMED);
         if (sd.highestUnlockedRank >= rank) return LocalizationUtils.Get(LocalizationKey.HUB_READY_TO_COLLECT);
         return LocalizationUtils.Get(LocalizationKey.HUB_LOCKED);
     }
@@ -430,7 +463,7 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
     private static string ItemName(ItemData item)
     {
         if (item.itemType == ItemData.ItemType.Card && !string.IsNullOrEmpty(item.clientId)
-            && ManagerSingleton<CardDatabaseManager>.instance?.TryGetCardFromDatabase(item.clientId) is { } row)
+            && Safe(() => ManagerSingleton<CardDatabaseManager>.instance?.TryGetCardFromDatabase(item.clientId), null) is { } row)
             return CardText.NameWithType(row);
         switch (item.itemType)
         {
@@ -455,6 +488,86 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
     #endregion
 
     private static bool Active(GameObject? go) => go != null && go.activeInHierarchy;
+
+    // A battle-pass data read that may throw while the data is still loading: fall back, skip that item.
+    private static T Safe<T>(Func<T> read, T fallback)
+    {
+        try { return read(); }
+        catch (Exception e)
+        {
+            if (!s_loggedReadFailure) Log.Warn($"Battle Pass: data read failed ({e.GetType().Name}: {e.Message}), item skipped");
+            s_loggedReadFailure = true;
+            return fallback;
+        }
+    }
+
+    private static bool s_loggedReadFailure;
+
+    #region FTUE
+
+    private Coroutine? m_ftueWait;
+    private Selectable? m_lastFtueTarget;
+
+    private void CancelFtueSettlementWait()
+    {
+        if (m_ftueWait == null) return;
+        AnywhereCoroutine.Instance.unmanaged.StopCoroutine(m_ftueWait);
+        m_ftueWait = null;
+    }
+
+    // See AccessibleProfile.WaitForFtueToSettle: stay silent if a speech-claiming FTUE state takes over, else announce.
+    private IEnumerator WaitForFtueToSettle()
+    {
+        var mgr = FTUEManager.instance;
+        var animator = mgr != null ? mgr.GetComponent<Animator>() : null;
+        while (FtueTracker.FtueIsRunning && animator != null && !animator.enabled) yield return null;
+        yield return null;
+        m_ftueWait = null;
+        if (FtueTracker.FtueSpeechClaimingStateActive)
+        {
+            Log.Info("Battle Pass: FTUE speech-claim active, staying silent");
+            yield break;
+        }
+        if (m_controller != null && AccessibilityMgr.IsFocused(this)) AnnounceFocus(-1);
+    }
+
+    // The tutorial highlighted a button here: a single-item nav of just that Selectable (all its input blocker lets
+    // through). Highlight cleared: back to the normal sections, silently.
+    private void RebuildForFtue()
+    {
+        CancelFtueSettlementWait();
+        var target = FtueTracker.FocusedElement;
+        m_lastFtueTarget = target;
+        if (target == null || !target.isActiveAndEnabled)
+        {
+            OnContentChanged();
+            return;
+        }
+        foreach (var g in m_groups) g.Detach();
+        m_groups.Clear();
+        m_questsGroupIndex = -1;
+        m_firstContentGroupIndex = -1;
+        m_lastContentSig = ContentSig();
+        AddGroup(new List<Selectable> { target }, KeyboardNavigator.DefaultLabel, null);
+        // A coached Toggle is a tab, so Enter must SELECT it — see FtueTracker.
+        m_groups[0].RadioToggleMode = target is Toggle;
+        m_activeGroup = 0;
+        m_groups[0].FocusFirst(announce: true, interruptPrior: true);
+    }
+
+    private static void OnFtueFocusChanged()
+    {
+        var self = s_instance;
+        // Paused beneath an overlay: that focus belongs to whatever is on top of us (the reward popup coaches
+        // Btn_Collect), and the overlay follows it. Adopting it here would leave this screen's only item pointing at
+        // a button that lives on another screen — one the FTUE has reparented out from under us. OnGainedFocus
+        // re-reads the focus anyway.
+        if (self.m_controller == null || AccessibilityMgr.CurrentScreen != self || !AccessibilityMgr.IsFocused(self)) return;
+        if (FtueTracker.FocusedElement == self.m_lastFtueTarget) return;
+        if (FtueTracker.FtueIsRunning) self.RebuildForFtue();
+    }
+
+    #endregion
 
     private static string? Loc(string? id)
     {
