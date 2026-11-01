@@ -8,6 +8,8 @@ public sealed partial class AccessibleKey
     #region Collection
     // Deck editor: open the game's card-detail overlay for the focused card.
     public static readonly AccessibleKey INSPECT_CARD = new(KeyCode.I);
+    // Decks screen and editor: what the panel says about the deck, with the rules it breaks.
+    public static readonly AccessibleKey READ_DECK_VALIDITY = new(KeyCode.V);
     // Card details / exchange popup: one copy more or less. Any modifiers: "+" is Shift+= on most layouts.
     public static readonly AccessibleKey ADD_COPY = new(KeyCode.Equals, anyModifiers: true);
     public static readonly AccessibleKey ADD_COPY_PLUS = new(KeyCode.Plus, anyModifiers: true);

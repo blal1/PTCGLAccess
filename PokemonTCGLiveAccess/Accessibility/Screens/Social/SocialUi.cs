@@ -55,6 +55,28 @@ internal static class SocialUi
         catch { return ""; }
     }
 
+    // A setting row's name is the nearby text that is none of its own value or description texts.
+    public static string RowName(LocText? description, System.Collections.Generic.IEnumerable<LocText?> own)
+    {
+        if (description == null) return "";
+        try
+        {
+            var known = new System.Collections.Generic.HashSet<LocText>(own.Where(t => t != null).Select(t => t!));
+            var scope = description.transform.parent;
+            for (int level = 0; level < 2 && scope != null; level++, scope = scope.parent)
+            {
+                foreach (var candidate in scope.GetComponentsInChildren<LocText>(includeInactive: false))
+                {
+                    if (candidate == null || known.Contains(candidate)) continue;
+                    var text = TextOf(candidate);
+                    if (!string.IsNullOrWhiteSpace(text)) return text;
+                }
+            }
+        }
+        catch { }
+        return "";
+    }
+
     // "first, second" without empty halves or a repeated word.
     public static string Join(string? first, string? second)
     {

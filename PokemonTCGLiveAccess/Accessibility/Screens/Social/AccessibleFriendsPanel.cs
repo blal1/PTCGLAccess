@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using _Rainier.Scripts.Utils.Tweening;
@@ -53,6 +54,9 @@ internal sealed class AccessibleFriendsPanel : AccessibleUI, ISharesPlayerName
 
     // Set by the matchmaker's invitation callback (not the main thread), spoken by the poller.
     private static volatile string? s_pendingInviteFrom;
+    // The friend service's events can arrive off the main thread too.
+    private static readonly ConcurrentQueue<string> s_pendingNews = new();
+    private static readonly HashSet<IFriendService> s_watchedServices = new();
 
     private readonly List<Row> m_rows = new();
     private int m_row = -1;
@@ -73,6 +77,26 @@ internal sealed class AccessibleFriendsPanel : AccessibleUI, ISharesPlayerName
         // A friend's challenge only shows up visually (a badge on their row in this panel), so a blind
         // player on any other screen would never know. Same static hook the game's own controller uses.
         MatchMaker.onDirectMatchInvitation += OnDirectMatchInvitation;
+        MatchMaker.onDirectMatchCancellation += _ => s_pendingNews.Enqueue(LocalizationUtils.Get(LocalizationKey.SOCIAL_INVITE_CANCELLED));
+    }
+
+    // Same service the game's FriendNotificationMonitor listens to. Going offline is not announced: only arrivals
+    // are something a player can act on.
+    private static void WatchService(IFriendService? service)
+    {
+        if (service == null || !s_watchedServices.Add(service)) return;
+        service.FriendRequestReceived += (_, n) => s_pendingNews.Enqueue(LocalizationUtils.Format(LocalizationKey.SOCIAL_REQUEST_RECEIVED_FORMAT, n.screenName));
+        service.FriendRequestAccepted += (_, n) => s_pendingNews.Enqueue(LocalizationUtils.Format(LocalizationKey.SOCIAL_REQUEST_ACCEPTED_FORMAT, n.screenName));
+        service.FriendOnlineStatusChanged += (_, n) =>
+        {
+            if (n.online) s_pendingNews.Enqueue(LocalizationUtils.Format(LocalizationKey.SOCIAL_FRIEND_CAME_ONLINE_FORMAT, n.screenName));
+        };
+    }
+
+    [HarmonyPatch(typeof(FriendNotificationMonitor), "StartMonitoring")]
+    private static class MonitorHook
+    {
+        private static void Postfix(FriendNotificationMonitor __instance) => WatchService(ReadField<IFriendService>(__instance, "_friendsService"));
     }
 
     // Called by AccessibleProfile when the Profile screen activates / goes away.
@@ -103,6 +127,11 @@ internal sealed class AccessibleFriendsPanel : AccessibleUI, ISharesPlayerName
         {
             s_pendingInviteFrom = null;
             self.AnnounceInvite(from);
+        }
+        while (s_pendingNews.TryDequeue(out var news))
+        {
+            AccessibilityMgr.OutputNotification(news, interrupt: false);
+            if (self.m_shown) self.Rebuild();
         }
         if (self.m_hub == null) return;
         var open = self.PanelOpen();
@@ -266,6 +295,10 @@ internal sealed class AccessibleFriendsPanel : AccessibleUI, ISharesPlayerName
             {
                 m_rows.Add(new Row(Kind.AcceptRequest, LocalizationUtils.Format(LocalizationKey.SOCIAL_ACCEPT_REQUEST_FORMAT, name), f.id, f));
                 m_rows.Add(new Row(Kind.DeclineRequest, LocalizationUtils.Format(LocalizationKey.SOCIAL_DECLINE_REQUEST_FORMAT, name), f.id, f));
+            }
+            else if (f.requestType == FriendRequestType.Outgoing)
+            {
+                m_rows.Add(new Row(Kind.Info, LocalizationUtils.Format(LocalizationKey.SOCIAL_REQUEST_SENT_FORMAT, name)));
             }
             else if (f.challengeRequest != null)
             {

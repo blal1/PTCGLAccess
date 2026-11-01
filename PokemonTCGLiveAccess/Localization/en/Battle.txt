@@ -95,12 +95,12 @@ BATTLE_NO_ENERGY_TO_MOVE_FROM	No energy to move from {0}	0=Pokémon
 BATTLE_FROM_SOURCE	from {0}	0=Pokémon the energy came from
 BATTLE_CAN_RECEIVE_ENERGY	can receive energy	move energy target tag
 BATTLE_HAS_ENERGY_TO_MOVE	has energy to move	move energy source tag
-BATTLE_HELP	A, B, C: your active, bench, hand. X, D, P: your discard pile, deck, prizes. Shift with these: the opponent's. S: stadium. Left and Right: cards. Down and Up: read the card line by line. Shift+Down: read to the end. Home, End, numbers: jump to a card. Enter: act on the card. I: look at the card. T: status. E: end your turn. Tab: the Done button when there is one. Escape: battle menu.	F1 on the board
+BATTLE_HELP	A, B, C: your active, bench, hand. X, D, P: your discard pile, deck, prizes. Shift with these: the opponent's. S: stadium. Left and Right: cards. Down and Up: read the card line by line. Shift+Down: read to the end. Home, End, numbers: jump to a card. Enter: act on the card. I: look at the card. L: your Lost Zone. Shift+L: the opponent's. T: status, clocks and tokens. G: effects on your side, Shift+G: your opponent's. H: battle log. M: emotes. E: end your turn. Tab: the Done button when there is one. Escape: battle menu.	F1 on the board
 BATTLE_HELP_HOLDING	You are holding a card. Move to where it goes with A, B, S and the arrows, then press Enter to drop it. Backspace: cancel.	F1 while holding a card
 BATTLE_HELP_ACTION_MENU	Up and Down: actions. Enter: use the action. Backspace or Escape: back to the board.	F1 in the action menu
 BATTLE_HELP_CARD_VIEW	Down and Up: read the card line by line. Backspace, Escape or I: close the card.	F1 in the card view
 BATTLE_HELP_CONFIRM_PLAY	Enter: play the card. Backspace or Escape: cancel.	F1 on the "Use X?" question
-BATTLE_PROMPT_HELP	Left and Right: choices. Down and Up: read the card line by line. Enter: choose. Numbers: jump to a choice. Tab: the Done choice.	F1 on a battle choice
+BATTLE_PROMPT_HELP	Left and Right: choices. Down and Up: read the card line by line. Enter: choose. Numbers: jump to a choice. Tab: the Done choice. Backspace: put back a chosen card. Zone keys: look at the board. T: status. G: effects. H: battle log.	F1 on a battle choice
 BATTLE_PROMPT_NEXT_COUNTER	Ready for the next counter	repeatable damage effect
 BATTLE_PROMPT_NO_VALID_CARDS	There are no valid cards to choose	fallback for the game's own message
 BATTLE_PROMPT_CHOICE_REQUIRED	A choice is required	unsupported prompt with no question
@@ -165,7 +165,7 @@ BATTLE_RESULT_PASS_XP	Battle Pass experience	reward tile
 BATTLE_RESULT_RANK_POINTS	Rank points	reward tile
 BATTLE_RESULT_ITEM_TIMES	{0} times {1}	0=item 1=count
 BATTLE_RESULT_REWARDS	Match rewards	fallback for the game's own header
-BATTLE_RESULT_HELP	Enter or Space: continue. On the stats page, Up and Down: buttons, Enter: press.	F1 on the result screen
+BATTLE_RESULT_HELP	Enter or Space: continue. On the stats page, Up and Down: buttons, Enter: press, H: battle log.	F1 on the result screen
 BATTLE_INTRO_OPPONENT	Opponent	unnamed opponent
 BATTLE_INTRO_VERSUS	Versus {0}	0=opponent
 BATTLE_INTRO_VERSUS_RANK	Versus {0}, {1}	0=opponent 1=rank
@@ -176,3 +176,47 @@ BATTLE_MULLIGAN_ONE	{0} had to take 1 mulligan before drawing a Basic Pokémon.	
 BATTLE_MULLIGAN_MANY	{0} had to take {1} mulligans before drawing a Basic Pokémon.	0=player 1=count
 BATTLE_MULLIGAN_HIDDEN	cards hidden	no revealed names
 BATTLE_MULLIGAN_NTH	Mulligan {0}: {1}	0=number 1=cards
+BATTLE_ZONE_OPP_LOST_ZONE	Opponent's Lost Zone	Zone name
+BATTLE_RPS_ROCK	rock	Fallback for option_rock
+BATTLE_RPS_PAPER	paper	Fallback for option_paper
+BATTLE_RPS_SCISSORS	scissors	Fallback for option_scissors
+BATTLE_RPS_RESULT	You chose {0}, your opponent chose {1}. {2}	0 mine, 1 theirs, 2 game result text
+BATTLE_PROMPT_REFLIP_RESULT	So far: {0} heads, {1} tails	Coin flips before a reflip choice
+BATTLE_PROMPT_RANGE_OPTIONAL	Optional, up to {0}	Selection bounds
+BATTLE_PROMPT_RANGE_BETWEEN	Between {0} and {1}	Selection bounds
+BATTLE_PROMPT_RANGE_EXACT	Exactly {0}	Selection bounds
+BATTLE_PROMPT_EXCLUSIVE_GROUPS	Choose from one group only	exclusiveGroupings
+BATTLE_PROMPT_NOT_SELECTABLE	not selectable	Greyed-out carousel card
+BATTLE_PROMPT_HIDDEN_CARDS	{0} hidden cards, not selectable	Face-down cards in a carousel
+BATTLE_PROMPT_NOTHING_SELECTED	Nothing selected here	Backspace with no chosen card
+BATTLE_PROMPT_MAX_SELECTED	Maximum reached. Deselect a card first, or choose Done	Board selection at max
+BATTLE_ATTACHED_CARD_TEXT	{0}: {1}	Name and text
+BATTLE_ATTACK_CURRENT_DAMAGE	currently {0} damage	Live damage on the attack widget
+BATTLE_REVEALED_CARDS	Revealed: {0}	Revealed card names
+BATTLE_TIME_ACTION_WARNING	{0} seconds left to act	Action timer warning
+BATTLE_TIME_CLOCK_WARNING	Your match clock: {0} left	Match clock warning
+BATTLE_STATUS_OPPONENT	Opponent: {0}	T key
+BATTLE_STATUS_TURN	Turn {0}	T key
+BATTLE_STATUS_ACTION_TIME	{0} seconds left to act	T key
+BATTLE_STATUS_MY_CLOCK	Your clock: {0}	T key
+BATTLE_STATUS_OPP_CLOCK	Opponent's clock: {0}	T key
+BATTLE_TOKEN_VSTAR	VSTAR Power	Token
+BATTLE_TOKEN_GX	GX attack	Token
+BATTLE_TOKEN_MINE_AVAILABLE	Your {0}: available	Token
+BATTLE_TOKEN_MINE_USED	Your {0}: used	Token
+BATTLE_TOKEN_OPP_AVAILABLE	Opponent's {0}: available	Token
+BATTLE_TOKEN_OPP_USED	Opponent's {0}: used	Token
+BATTLE_EFFECTS_MINE	Effects on your side	G key
+BATTLE_EFFECTS_OPP	Effects on your opponent's side	Shift+G
+BATTLE_EFFECTS_NONE	{0}: none	G key, 0 = title
+BATTLE_LOG_TITLE	Battle log	H key
+BATTLE_LOG_EMPTY	The battle log is empty	H key
+BATTLE_LOG_HELP	Up and Down: previous or next line. Left and Right: previous or next turn. Home and End: first or last line. Backspace, Escape or H: close.	F1
+BATTLE_REVIEW_HELP	Zone keys: look at a zone. Left and Right: cards. Up and Down: read the card. T: status. G: effects. H: battle log. Backspace or Escape: back to the choice.	F1
+BATTLE_EMOTE_MENU	Emotes	M key
+BATTLE_EMOTE_RECEIVED	Your opponent sends: {0}	Opponent emote
+BATTLE_EMOTE_MUTE	Mute opponent's emotes	Menu option
+BATTLE_EMOTE_UNMUTE	Unmute opponent's emotes	Menu option
+BATTLE_EMOTE_MUTED	Opponent's emotes muted	Answer
+BATTLE_EMOTE_UNMUTED	Opponent's emotes unmuted	Answer
+BATTLE_EMOTE_UNAVAILABLE	Emotes are not available right now	Answer

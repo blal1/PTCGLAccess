@@ -26,10 +26,45 @@ HUB_PAGE_FORMAT	page {0} of {1}	carousel page: 0=page 1=pages
 HUB_PLAY	Play	Build and Battle buy-in button without readable text
 HUB_BNB_LOBBY	Build and Battle lobby	Build and Battle run lobby screen name
 HUB_BNB_MATCHES_FORMAT	{0} of {1} matches	Build and Battle run progress: 0=played 1=total
-HUB_BNB_LOBBY_HELP	Up and Down arrows: move between the buttons. Enter: activate.	F1 in the Build and Battle lobby
+HUB_BNB_LOBBY_HELP	Two sections: the buttons, and the map of the run. Up and Down arrows: move, and cross to the other section at the edge. Tab: other section. Enter: activate a button, or show a match's rewards or the prize pot.	F1 in the Build and Battle lobby
 HUB_INFORMATION	Information	icon-only info button
 HUB_BACK	Back	icon-only back button
-HUB_POPUP_HELP	Arrows: move between the buttons. Enter: activate. Escape: close, when the popup can be closed.	F1 on a Build and Battle popup
+HUB_POPUP_HELP	Arrows: move between the buttons. Enter: activate. R: read the text again. Escape: close, when the popup can be closed.	F1 on a hub popup
+HUB_CLOSE	Close	icon-only close button
+HUB_OPENS_BROWSER_FORMAT	{0}, opens in your browser	button leaving the game: 0=its label
+HUB_LOADING	Loading	loading notice before item grants
+HUB_BNB_MAP	Map of the run	Build and Battle lobby section
+HUB_BNB_DECK_INVALID	Your deck is not valid: edit it before playing.	Build and Battle lobby, deck warning icon showing
+HUB_BNB_DECK_VALID	Your deck is valid.	Build and Battle lobby, warning icon gone
+HUB_BNB_MATCH_ROW_FORMAT	Match {0}: {1}	Build and Battle: 0=match number 1=state or details
+HUB_BNB_MATCH_WON	won	Build and Battle match state
+HUB_BNB_MATCH_LOST	lost	Build and Battle match state
+HUB_BNB_MATCH_NEXT	next match	Build and Battle match state
+HUB_BNB_MATCH_UPCOMING	upcoming	Build and Battle match state
+HUB_BNB_PRIZE_POT	Prize pot	Build and Battle map row
+HUB_BNB_PRIZE_POT_READY	Prize pot, ready to open	Build and Battle map row, run ended
+HUB_BNB_RESULT_WON_FORMAT	Match {0} won.	spoken back in the lobby: 0=match number
+HUB_BNB_RESULT_LOST_FORMAT	Match {0} lost.	spoken back in the lobby: 0=match number
+HUB_BNB_BOX_CONTENTS_FORMAT	Contains: {0}	Build and Battle box: 0=list of contents
+HUB_BNB_DECK_COUNT_FORMAT	{0} cards	Build and Battle starter deck size
+HUB_BNB_INSPECTOR_HELP	Up and Down arrows: move through the cards, then the buttons. Enter: read the card in full, or activate the button. Tab: other section.	F1 on the Build and Battle starter deck
+HUB_BNB_SETTINGS_HELP	Up and Down arrows: move between settings. Left and Right arrows: change the value. Enter: confirm a resolution, flip a setting or activate a button. Escape: close.	F1 on the Build and Battle settings
+HUB_RM_TITLE	Research missions	Card Dex tab name
+HUB_RM_HELP	Up and Down arrows: move, and cross sections at the edge. Left and Right arrows: move within a row. Tab: next section. Enter: open the mission or activate. Escape: open the menu.	F1 on research missions
+HUB_RM_DETAILS_HELP	Up and Down arrows: move through the cards, then the buttons. Enter: open the card, or activate the button. R: read the mission again. Tab: other section. Escape: close.	F1 on a research mission's details
+HUB_RM_MISSIONS	Missions	research missions section
+HUB_RM_CARDS	Cards to collect	mission details section
+HUB_RM_IN_PROGRESS	in progress	mission state
+HUB_RM_EASY	easy	mission difficulty
+HUB_RM_MEDIUM	medium	mission difficulty
+HUB_RM_HARD	hard	mission difficulty
+HUB_RM_EXTRA_HARD	very hard	mission difficulty
+HUB_RM_REWARDS_READY_FORMAT	rewards to collect: {0}	research missions set row: 0=missions ready
+HUB_RM_COLLECTOR_STATS	Collector stats	icon-only button
+HUB_BP_COMPLETE	Battle Pass complete!	Battle Pass animation
+HUB_BP_WELCOME	Welcome to the new Battle Pass.	Battle Pass animation
+HUB_BP_PASS_PURCHASED	Premium pass unlocked.	Battle Pass animation
+HUB_BP_TIER_UNLOCKED_FORMAT	Tier {0} unlocked.	Battle Pass animation: 0=tier number
 HUB_SEARCHING	Searching for an opponent	matchmaking, when the game shows no text
 HUB_OPPONENT_FOUND	Opponent found, starting match	matchmaking succeeded
 HUB_MATCHMAKING_HELP	Enter or Escape: cancel the search.	F1 while searching for an opponent

@@ -29,7 +29,17 @@ internal sealed class AccessibleOverflowMenu : AccessibleUI
         m_nav = new KeyboardNavigator(this) { AllowTab = true, OnBack = () => m_controller?.Dismiss() };
     }
 
-    public void HandleInput() => m_nav.HandleInput();
+    public void HandleInput()
+    {
+        // Backstop if the deactivate listener was missed (a destroyed controller, CloseAllOverlays).
+        if (m_controller == null || !PopupUtils.IsOverlayOpen(m_controller.MyOverlayScreenGroup))
+        {
+            m_controller = null;
+            AccessibilityMgr.HideUI(this);
+            return;
+        }
+        m_nav.HandleInput();
+    }
 
     public string GetHelp() => LocalizationUtils.Get(LocalizationKey.SOCIAL_MENU_HELP);
 

@@ -31,7 +31,7 @@ internal sealed class AccessibleGift : AccessibleUI
 
     public void HandleInput()
     {
-        if (m_overlay == null || !m_overlay.gameObject.activeInHierarchy)
+        if (m_overlay == null || !PopupUtils.IsOverlayOpen(m_overlay))
         {
             Close();
             return;
@@ -39,6 +39,8 @@ internal sealed class AccessibleGift : AccessibleUI
         if (AccessibleKey.CONFIRM.IsPressed())
         {
             var btn = ReadField<Button>(m_overlay, "claimButton");
+            // The game disables the button on the first click, which onClick.Invoke alone would ignore.
+            if (btn != null && !btn.enabled) return;
             if (btn != null) btn.onClick.Invoke();
             else AccessibilityMgr.Output(this, LocalizationUtils.Get(LocalizationKey.POPUP_GIFT_CANT_CLAIM), interrupt: true);
             return;
@@ -76,8 +78,9 @@ internal sealed class AccessibleGift : AccessibleUI
         };
         foreach (var t in texts)
             if (PopupUtils.Text(t) is { } s) lines.Add(s);
-        var n = RewardCount();
-        if (n > 0) lines.Add(n == 1 ? LocalizationUtils.Get(LocalizationKey.POPUP_ONE_REWARD) : LocalizationUtils.Format(LocalizationKey.POPUP_REWARDS_FORMAT, n));
+        // Names, not a count: the slots' product buttons are not exposed, so this is the only reading of the contents.
+        if (AccessibleReward.SummarizeRewards(ReadField<Transform>(m_overlay, "rewardHolder")) is { } rewards) lines.Add(LocalizationUtils.Format(LocalizationKey.POPUP_GIFT_CONTENTS_FORMAT, rewards));
+        else if (RewardCount() is var n && n > 0) lines.Add(n == 1 ? LocalizationUtils.Get(LocalizationKey.POPUP_ONE_REWARD) : LocalizationUtils.Format(LocalizationKey.POPUP_REWARDS_FORMAT, n));
         return lines;
     }
 

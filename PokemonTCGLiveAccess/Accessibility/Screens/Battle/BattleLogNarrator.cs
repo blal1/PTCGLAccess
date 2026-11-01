@@ -50,6 +50,15 @@ internal static class BattleLogNarrator
         private static void Postfix(IEnumerable<IBattleLogMainEntryData> newMainEntries) => OnEntries(newMainEntries);
     }
 
+    // HierarchyChangedEventSystem.UpdateHierarchy fires OnMainEntriesAdded only for a phase that already
+    // exists. The entries that open a new phase (usually the first action of a turn) travel inside
+    // newPhase.LogEntries and reach only AddPhase, so without this hook they were never spoken.
+    [HarmonyPatch(typeof(BattleLog), "AddPhase")]
+    private static class AddPhaseHook
+    {
+        private static void Postfix(IBattleLogPhaseData newPhase) => OnEntries(newPhase?.LogEntries);
+    }
+
     // Re-subscribe after the game clears the operation delegates each match (see class header).
     [HarmonyPatch(typeof(MatchNetworkParser), "ResetCachedStaticElements")]
     private static class ResetHook
@@ -75,34 +84,53 @@ internal static class BattleLogNarrator
         catch (Exception ex) { Log.Error($"BattleLog: op-hook subscribe threw: {ex.Message}"); }
     }
 
-    private static void OnEntries(IEnumerable<IBattleLogMainEntryData> newMainEntries)
+    // The lines of one log entry as the game's own export prints them (BattleLogExporter): the main line,
+    // then each sub-entry (damage breakdown, sub-actions) with its detail. BattleLog.OnSubEntryAdded has no
+    // caller in this game build, so sub-entries are read here, from the main entry.
+    // ponytail: a sub-entry added after its main entry was released is not narrated; the H history has it.
+    internal static IEnumerable<string> LinesOf(IBattleLogMainEntryData entry)
+    {
+        var main = entry.PlainTextDisplayString;
+        if (string.IsNullOrWhiteSpace(main)) main = entry.DisplayString;
+        if (!string.IsNullOrWhiteSpace(main)) yield return main;
+        if (entry.SubEntries == null) yield break;
+        foreach (var sub in entry.SubEntries)
+        {
+            if (sub == null) continue;
+            if (!string.IsNullOrWhiteSpace(sub.PlainTextDisplayString)) yield return sub.PlainTextDisplayString;
+            if (!string.IsNullOrWhiteSpace(sub.PlainTextSubString)) yield return sub.PlainTextSubString;
+        }
+    }
+
+    private static void OnEntries(IEnumerable<IBattleLogMainEntryData>? newMainEntries)
     {
         if (newMainEntries == null) return;
         if (!s_opHooksReady) SubscribeOperationHooks();   // cover a match whose reset ran before the mod loaded
         foreach (var entry in newMainEntries)
         {
-            if (entry == null) continue;
-            var text = entry.PlainTextDisplayString;
-            if (string.IsNullOrWhiteSpace(text)) text = entry.DisplayString;
-            Log.Info($"BattleLog entry [anim={AnimationsInFlight()} myTurn={IsMyTurn()}]: '{text}'");
-            if (string.IsNullOrWhiteSpace(text)) continue;
+            if (entry != null) foreach (var line in LinesOf(entry)) OnLine(line);
+        }
+    }
 
-            // Buffer only the OPPONENT's actions (sync them to the animation — you can't see them, and
-            // the game composes their log ahead of the visual). On YOUR turn, speak immediately: you
-            // just took the action so you have context, AND buffering would otherwise PUSH BACK a KO
-            // attack's log — the game already holds that whole chain's log until you finish taking your
-            // prize (the op isn't "Finished" until then), so it composes late; delaying it further put
-            // it well after the prize. Immediate = it lands when it shows up. Drain any backlog first so
-            // order holds. Fail-safe: if the op hooks couldn't attach, never buffer (immediate as before).
-            if (s_opHooksReady && AnimationsInFlight() && !IsMyTurn())
-            {
-                s_pending.Enqueue(text!);
-            }
-            else
-            {
-                FlushPending();
-                AccessibilityMgr.OutputNotification(text!);
-            }
+    private static void OnLine(string text)
+    {
+        Log.Info($"BattleLog entry [anim={AnimationsInFlight()} myTurn={IsMyTurn()}]: '{text}'");
+
+        // Buffer only the OPPONENT's actions (sync them to the animation — you can't see them, and
+        // the game composes their log ahead of the visual). On YOUR turn, speak immediately: you
+        // just took the action so you have context, AND buffering would otherwise PUSH BACK a KO
+        // attack's log — the game already holds that whole chain's log until you finish taking your
+        // prize (the op isn't "Finished" until then), so it composes late; delaying it further put
+        // it well after the prize. Immediate = it lands when it shows up. Drain any backlog first so
+        // order holds. Fail-safe: if the op hooks couldn't attach, never buffer (immediate as before).
+        if (s_opHooksReady && AnimationsInFlight() && !IsMyTurn())
+        {
+            s_pending.Enqueue(text);
+        }
+        else
+        {
+            FlushPending();
+            AccessibilityMgr.OutputNotification(text);
         }
     }
 

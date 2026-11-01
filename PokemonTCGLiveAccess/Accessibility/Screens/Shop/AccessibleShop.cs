@@ -32,6 +32,8 @@ internal sealed class AccessibleShop : AccessibleScreen
 {
     private static readonly AccessibleShop s_instance = new();
 
+    private static readonly System.Reflection.FieldInfo? s_seriesFilter = AccessTools.Field(typeof(SeriesSelectorButton), "seriesFilter");
+
     private HUBShopScreenController? m_controller;
     private readonly List<KeyboardNavigator> m_groups = new();
     private int m_active = -1;
@@ -44,7 +46,8 @@ internal sealed class AccessibleShop : AccessibleScreen
     private ScannedCardListView? m_redeemList;
     private UnityAction? m_redeemListener;
     private int m_lastScannedCount;
-    private bool m_redeemResultPending;   // a failed submit just fired; speak its status message next frame
+    private bool m_redeemResultPending;   // a submit just finished; speak its status message next frame
+    private bool m_redeemFailed;
 
     // Tutorial: the coached control, presented alone.
     private readonly KeyboardNavigator m_ftueNav;
@@ -84,7 +87,16 @@ internal sealed class AccessibleShop : AccessibleScreen
         if (UpdateFtue()) return;
 
         var sig = ContentSig();
-        if (sig != m_lastContentSig) { OnContentChanged(); return; }
+        if (sig != m_lastContentSig)
+        {
+            // The set picker opening or closing changes what is under the cursor: say where the player landed.
+            // Only on the same page: a tab switch announces itself.
+            var cut = sig.LastIndexOf('|');
+            var menuMoved = cut > 0 && m_lastContentSig.StartsWith(sig.Substring(0, cut + 1));
+            OnContentChanged();
+            if (menuMoved && m_active >= 0) m_groups[m_active].RefocusCurrent(announce: true, interrupt: true);
+            return;
+        }
         if (m_redeemResultPending) AnnounceRedeemResult();
         if (m_groups.Count == 0 || m_active < 0) return;
 
@@ -193,7 +205,7 @@ internal sealed class AccessibleShop : AccessibleScreen
             if (extras.Count > 0)
                 content.Add((CollectionUi.ReadingOrder(extras[0].transform), extras,
                     LocalizationUtils.Get(sub is ShopPageExpansionsScreen ? LocalizationKey.SHOPUI_CHOOSE_SET : LocalizationKey.SHOPUI_MORE)));
-            foreach (var c in content.OrderBy(c => c.key)) AddContent(c.items, null, c.name);
+            foreach (var c in content.OrderBy(c => c.key)) AddContent(c.items, ExtraLabel, c.name);
         }
         // else: sub == null → the page-drag builder hasn't mounted the current sub-screen yet (it loads asynchronously).
         // Build no content this pass — the content-signature poll rebuilds the instant it resolves. We must NOT sweep
@@ -226,7 +238,11 @@ internal sealed class AccessibleShop : AccessibleScreen
         var sub = ActiveSubScreen();
         if (sub == null) return "none";
         var page = m_controller?.builder?.GetPageDragManager()?.currentPage ?? -1;
-        return $"{sub.GetType().Name}|{page}|{sub.GetComponentsInChildren<ShopProductController>(includeInactive: false).Length}";
+        // The set picker: its options stay active while hidden and come back through the CanvasGroup, after the animation.
+        var open = sub is ShopPageExpansionsScreen ? sub.GetComponentsInChildren<ExpandableSeriesSelector>(includeInactive: false)
+            .SelectMany(m => m.GetComponentsInChildren<Selectable>(includeInactive: false)).Count(s => s.IsInteractable()) : 0;
+        var drawerOpen = sub is ShopPageExpansionsScreen expansions && expansions.GetExpansionMenu()?.IsOpen == true;
+        return $"{sub.GetType().Name}|{page}|{sub.GetComponentsInChildren<ShopProductController>(includeInactive: false).Length}|{open}{(drawerOpen ? "+" : "")}";
     }
 
     private void OnContentChanged()
@@ -303,6 +319,14 @@ internal sealed class AccessibleShop : AccessibleScreen
     }
 
     // A scanned entry's delete button reads "<gift name>, remove"; everything else keeps its default label.
+    // A series button shows only a logo: name it from its filter, not the generic "choose expansion".
+    private static string ExtraLabel(Selectable s)
+    {
+        var series = s.GetComponentInParent<SeriesSelectorButton>();
+        if (series == null) return KeyboardNavigator.DefaultLabel(s);
+        return CollectionUi.FirstLetterText(series) ?? s_seriesFilter?.GetValue(series)?.ToString() ?? KeyboardNavigator.DefaultLabel(s);
+    }
+
     private static string RedeemLabel(Selectable s)
     {
         var item = s.GetComponentInParent<ScannedCardListViewItem>();
@@ -360,7 +384,8 @@ internal sealed class AccessibleShop : AccessibleScreen
     {
         m_redeemResultPending = false;
         if (ActiveSubScreen() is not ShopPageCodeCardScreen redeem) return;
-        if (CollectionUi.Text(ReadField<LocText>(redeem, "_codeStatusMessage")) is { } status) AccessibilityMgr.Output(this, status, interrupt: true);
+        // After a success this queues behind "reward added"; after a failure it is the only answer to the key press.
+        if (CollectionUi.Text(ReadField<LocText>(redeem, "_codeStatusMessage")) is { } status) AccessibilityMgr.Output(this, status, interrupt: m_redeemFailed);
     }
 
     // ── Labels ──
@@ -452,14 +477,19 @@ internal sealed class AccessibleShop : AccessibleScreen
 
     // REDEEM: a failed submit (already redeemed / invalid / empty / list full) doesn't add to the list, so onListUpdated
     // never fires — but the game calls PlayScanFXAnimations(DidFail) the moment it knows, in the same block that writes
-    // the status message. The enum is private, so read it as an int: DidFail = 3.
+    // the status message. The enum is private, so read it as an int: IsAnalyzing = 1, DidSucceed = 2, DidFail = 3.
+    // A success writes its messages (ContainsCode and so on) right after DidSucceed in the same frame.
     [HarmonyPatch(typeof(ShopPageCodeCardScreen), "PlayScanFXAnimations")]
     private static class PlayScanFxHook
     {
         private static void Postfix(object[] __args)
         {
-            if (s_instance.m_controller != null && __args is { Length: > 0 } && Convert.ToInt32(__args[0]) == 3)
-                s_instance.m_redeemResultPending = true;
+            if (s_instance.m_controller == null || __args is not { Length: > 0 }) return;
+            var state = Convert.ToInt32(__args[0]);
+            if (state == 1) AccessibilityMgr.Output(s_instance, LocalizationUtils.Get(LocalizationKey.SHOPUI_CHECKING_CODE), interrupt: true);
+            if (state != 2 && state != 3) return;
+            s_instance.m_redeemResultPending = true;
+            s_instance.m_redeemFailed = state == 3;
         }
     }
 }

@@ -241,6 +241,8 @@ internal sealed class AccessibleHome : AccessibleScreen
 
     private void RebuildGroups()
     {
+        // Dropped navigators must let go of their Selectables, or the old ones keep reacting.
+        foreach (var g in m_groups.OfType<KeyboardNavigator>()) g.Detach();
         m_groups.Clear();
         m_tabGroupIndex = -1;
         m_mainGroupIndex = -1;

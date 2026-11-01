@@ -26,10 +26,45 @@ HUB_PAGE_FORMAT	page {0} sur {1}	carousel page: 0=page 1=pages
 HUB_PLAY	Jouer	Build and Battle buy-in button without readable text
 HUB_BNB_LOBBY	Salon Construction et Combat	Build and Battle run lobby screen name
 HUB_BNB_MATCHES_FORMAT	{0} matchs sur {1}	Build and Battle run progress: 0=played 1=total
-HUB_BNB_LOBBY_HELP	Flèches haut et bas : passer d'un bouton à l'autre. Entrée : activer.	F1 in the Build and Battle lobby
+HUB_BNB_LOBBY_HELP	Deux sections : les boutons et la carte de la partie. Flèches haut et bas : se déplacer, et changer de section au bord. Tab : autre section. Entrée : activer un bouton, ou afficher les récompenses d'un match ou la cagnotte.	F1 in the Build and Battle lobby
 HUB_INFORMATION	Informations	icon-only info button
 HUB_BACK	Retour	icon-only back button
-HUB_POPUP_HELP	Flèches : passer d'un bouton à l'autre. Entrée : activer. Échap : fermer, quand la fenêtre peut être fermée.	F1 on a Build and Battle popup
+HUB_POPUP_HELP	Flèches : passer d'un bouton à l'autre. Entrée : activer. R : relire le texte. Échap : fermer, quand la fenêtre peut être fermée.	F1 on a hub popup
+HUB_CLOSE	Fermer	icon-only close button
+HUB_OPENS_BROWSER_FORMAT	{0}, s'ouvre dans le navigateur	button leaving the game: 0=its label
+HUB_LOADING	Chargement	loading notice before item grants
+HUB_BNB_MAP	Carte de la partie	Build and Battle lobby section
+HUB_BNB_DECK_INVALID	Votre deck n'est pas valide : modifiez-le avant de jouer.	Build and Battle lobby, deck warning icon showing
+HUB_BNB_DECK_VALID	Votre deck est valide.	Build and Battle lobby, warning icon gone
+HUB_BNB_MATCH_ROW_FORMAT	Match {0} : {1}	Build and Battle: 0=match number 1=state or details
+HUB_BNB_MATCH_WON	gagné	Build and Battle match state
+HUB_BNB_MATCH_LOST	perdu	Build and Battle match state
+HUB_BNB_MATCH_NEXT	prochain match	Build and Battle match state
+HUB_BNB_MATCH_UPCOMING	à venir	Build and Battle match state
+HUB_BNB_PRIZE_POT	Cagnotte	Build and Battle map row
+HUB_BNB_PRIZE_POT_READY	Cagnotte, prête à être ouverte	Build and Battle map row, run ended
+HUB_BNB_RESULT_WON_FORMAT	Match {0} gagné.	spoken back in the lobby: 0=match number
+HUB_BNB_RESULT_LOST_FORMAT	Match {0} perdu.	spoken back in the lobby: 0=match number
+HUB_BNB_BOX_CONTENTS_FORMAT	Contient : {0}	Build and Battle box: 0=list of contents
+HUB_BNB_DECK_COUNT_FORMAT	{0} cartes	Build and Battle starter deck size
+HUB_BNB_INSPECTOR_HELP	Flèches haut et bas : parcourir les cartes, puis les boutons. Entrée : lire la carte en entier, ou activer le bouton. Tab : autre section.	F1 on the Build and Battle starter deck
+HUB_BNB_SETTINGS_HELP	Flèches haut et bas : passer d'un réglage à l'autre. Flèches gauche et droite : changer la valeur. Entrée : confirmer une résolution, inverser un réglage ou activer un bouton. Échap : fermer.	F1 on the Build and Battle settings
+HUB_RM_TITLE	Missions de recherche	Card Dex tab name
+HUB_RM_HELP	Flèches haut et bas : se déplacer, et changer de section au bord. Flèches gauche et droite : se déplacer dans une rangée. Tab : section suivante. Entrée : ouvrir la mission ou activer. Échap : ouvrir le menu.	F1 on research missions
+HUB_RM_DETAILS_HELP	Flèches haut et bas : parcourir les cartes, puis les boutons. Entrée : ouvrir la carte, ou activer le bouton. R : relire la mission. Tab : autre section. Échap : fermer.	F1 on a research mission's details
+HUB_RM_MISSIONS	Missions	research missions section
+HUB_RM_CARDS	Cartes à collectionner	mission details section
+HUB_RM_IN_PROGRESS	en cours	mission state
+HUB_RM_EASY	facile	mission difficulty
+HUB_RM_MEDIUM	moyenne	mission difficulty
+HUB_RM_HARD	difficile	mission difficulty
+HUB_RM_EXTRA_HARD	très difficile	mission difficulty
+HUB_RM_REWARDS_READY_FORMAT	récompenses à récupérer : {0}	research missions set row: 0=missions ready
+HUB_RM_COLLECTOR_STATS	Statistiques de collection	icon-only button
+HUB_BP_COMPLETE	Passe de combat terminé !	Battle Pass animation
+HUB_BP_WELCOME	Bienvenue dans le nouveau Passe de combat.	Battle Pass animation
+HUB_BP_PASS_PURCHASED	Passe premium débloqué.	Battle Pass animation
+HUB_BP_TIER_UNLOCKED_FORMAT	Palier {0} débloqué.	Battle Pass animation: 0=tier number
 HUB_SEARCHING	Recherche d'un adversaire	matchmaking, when the game shows no text
 HUB_OPPONENT_FOUND	Adversaire trouvé, le match commence	matchmaking succeeded
 HUB_MATCHMAKING_HELP	Entrée ou Échap : annuler la recherche.	F1 while searching for an opponent

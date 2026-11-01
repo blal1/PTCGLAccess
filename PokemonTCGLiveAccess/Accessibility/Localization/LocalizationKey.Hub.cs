@@ -46,6 +46,47 @@ public sealed partial class LocalizationKey
     public static readonly LocalizationKey HUB_BNB_MATCHES_FORMAT = new(nameof(HUB_BNB_MATCHES_FORMAT));
     public static readonly LocalizationKey HUB_BNB_LOBBY_HELP = new(nameof(HUB_BNB_LOBBY_HELP));
     public static readonly LocalizationKey HUB_POPUP_HELP = new(nameof(HUB_POPUP_HELP));
+    public static readonly LocalizationKey HUB_CLOSE = new(nameof(HUB_CLOSE));
+    public static readonly LocalizationKey HUB_OPENS_BROWSER_FORMAT = new(nameof(HUB_OPENS_BROWSER_FORMAT));
+    public static readonly LocalizationKey HUB_LOADING = new(nameof(HUB_LOADING));
+    public static readonly LocalizationKey HUB_BNB_MAP = new(nameof(HUB_BNB_MAP));
+    public static readonly LocalizationKey HUB_BNB_DECK_INVALID = new(nameof(HUB_BNB_DECK_INVALID));
+    public static readonly LocalizationKey HUB_BNB_DECK_VALID = new(nameof(HUB_BNB_DECK_VALID));
+    public static readonly LocalizationKey HUB_BNB_MATCH_ROW_FORMAT = new(nameof(HUB_BNB_MATCH_ROW_FORMAT));
+    public static readonly LocalizationKey HUB_BNB_MATCH_WON = new(nameof(HUB_BNB_MATCH_WON));
+    public static readonly LocalizationKey HUB_BNB_MATCH_LOST = new(nameof(HUB_BNB_MATCH_LOST));
+    public static readonly LocalizationKey HUB_BNB_MATCH_NEXT = new(nameof(HUB_BNB_MATCH_NEXT));
+    public static readonly LocalizationKey HUB_BNB_MATCH_UPCOMING = new(nameof(HUB_BNB_MATCH_UPCOMING));
+    public static readonly LocalizationKey HUB_BNB_PRIZE_POT = new(nameof(HUB_BNB_PRIZE_POT));
+    public static readonly LocalizationKey HUB_BNB_PRIZE_POT_READY = new(nameof(HUB_BNB_PRIZE_POT_READY));
+    public static readonly LocalizationKey HUB_BNB_RESULT_WON_FORMAT = new(nameof(HUB_BNB_RESULT_WON_FORMAT));
+    public static readonly LocalizationKey HUB_BNB_RESULT_LOST_FORMAT = new(nameof(HUB_BNB_RESULT_LOST_FORMAT));
+    public static readonly LocalizationKey HUB_BNB_BOX_CONTENTS_FORMAT = new(nameof(HUB_BNB_BOX_CONTENTS_FORMAT));
+    public static readonly LocalizationKey HUB_BNB_DECK_COUNT_FORMAT = new(nameof(HUB_BNB_DECK_COUNT_FORMAT));
+    public static readonly LocalizationKey HUB_BNB_INSPECTOR_HELP = new(nameof(HUB_BNB_INSPECTOR_HELP));
+    public static readonly LocalizationKey HUB_BNB_SETTINGS_HELP = new(nameof(HUB_BNB_SETTINGS_HELP));
+    #endregion
+
+    #region Research missions
+    public static readonly LocalizationKey HUB_RM_TITLE = new(nameof(HUB_RM_TITLE));
+    public static readonly LocalizationKey HUB_RM_HELP = new(nameof(HUB_RM_HELP));
+    public static readonly LocalizationKey HUB_RM_DETAILS_HELP = new(nameof(HUB_RM_DETAILS_HELP));
+    public static readonly LocalizationKey HUB_RM_MISSIONS = new(nameof(HUB_RM_MISSIONS));
+    public static readonly LocalizationKey HUB_RM_CARDS = new(nameof(HUB_RM_CARDS));
+    public static readonly LocalizationKey HUB_RM_IN_PROGRESS = new(nameof(HUB_RM_IN_PROGRESS));
+    public static readonly LocalizationKey HUB_RM_EASY = new(nameof(HUB_RM_EASY));
+    public static readonly LocalizationKey HUB_RM_MEDIUM = new(nameof(HUB_RM_MEDIUM));
+    public static readonly LocalizationKey HUB_RM_HARD = new(nameof(HUB_RM_HARD));
+    public static readonly LocalizationKey HUB_RM_EXTRA_HARD = new(nameof(HUB_RM_EXTRA_HARD));
+    public static readonly LocalizationKey HUB_RM_REWARDS_READY_FORMAT = new(nameof(HUB_RM_REWARDS_READY_FORMAT));
+    public static readonly LocalizationKey HUB_RM_COLLECTOR_STATS = new(nameof(HUB_RM_COLLECTOR_STATS));
+    #endregion
+
+    #region Battle Pass moments
+    public static readonly LocalizationKey HUB_BP_COMPLETE = new(nameof(HUB_BP_COMPLETE));
+    public static readonly LocalizationKey HUB_BP_WELCOME = new(nameof(HUB_BP_WELCOME));
+    public static readonly LocalizationKey HUB_BP_PASS_PURCHASED = new(nameof(HUB_BP_PASS_PURCHASED));
+    public static readonly LocalizationKey HUB_BP_TIER_UNLOCKED_FORMAT = new(nameof(HUB_BP_TIER_UNLOCKED_FORMAT));
     #endregion
 
     #region Matchmaking

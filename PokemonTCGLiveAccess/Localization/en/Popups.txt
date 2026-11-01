@@ -43,3 +43,12 @@ POPUP_PACK	Pack	booster pack without a name
 POPUP_PACK_FORMAT	{0}, {1} cards	sealed booster pack: 0=pack name 1=card count
 POPUP_RANK_ONE_POINT_GAINED	Plus 1 rank point, {0} total	after a ranked match: 0=new total
 POPUP_RANK_POINTS_GAINED	Plus {0} rank points, {1} total	after a ranked match: 0=points gained 1=new total
+POPUP_LEVEL_FORMAT	Level {0}	level-up reward: 0=level
+POPUP_SEASON_MATCHES_FORMAT	{0} of {1} season matches played	season reward: 0=played 1=required
+POPUP_UNLOCK_COST_FORMAT	Cost: {0}	unlock tier: 0=price
+POPUP_UNLOCK_BALANCE_FORMAT	You have {0}	unlock tier: 0=balance as shown
+POPUP_GIFT_CONTENTS_FORMAT	Contains: {0}	gift: 0=list of items
+POPUP_GENERIC_HELP	Arrows and Tab: move between buttons. Enter: activate. Escape: close, if the popup has a close button. Shift+Up: read the text again.	F1 on a popup with no dedicated component
+POPUP_CONSENT_ACCESSIBILITY_HELP	Up and down arrows: move through the settings. Space: change a setting. Enter: activate a button.	F1 on the first-launch accessibility step
+POPUP_CONNECTION_POOR	Connection lost, trying to reconnect.	the reconnecting indicator appeared
+POPUP_CONNECTION_RESTORED	Connection restored.	the reconnecting indicator went away

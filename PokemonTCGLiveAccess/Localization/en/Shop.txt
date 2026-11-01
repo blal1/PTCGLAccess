@@ -9,7 +9,7 @@ SHOPUI_MORE	More	extra controls group
 SHOPUI_SCANNED_CODE	Scanned code	reward without a name
 SHOPUI_REMOVE	{0}, remove	0=reward name
 SHOPUI_REWARD_ADDED	Reward added	code redeemed
-SHOPUI_PRODUCT_HELP	Arrows move between the purchase and booster odds buttons. Enter activates. Escape closes.	F1 in the product overlay
+SHOPUI_PRODUCT_HELP	Up and Down arrows move between the purchase button, the booster odds and the cards, boosters and decks inside. Enter activates. Escape closes.	F1 in the product overlay
 SHOPUI_BOOSTER_ODDS	Booster pack odds	button
 SHOPUI_TIMES	{0} times {1}	0=item 1=count
 SHOPUI_CONTAINS	Contains {0}	0=item list
@@ -22,5 +22,11 @@ SHOPUI_ITEM_AVATAR	avatar item	item type
 SHOPUI_ITEM_BUILD_BATTLE	Build and Battle box	item type
 SHOPUI_ITEM_FEATURE	feature	item type
 SHOPUI_ITEM	item	item type
-SHOPUI_BUNDLES_HELP	Arrows move between the bundles. Enter opens one. Escape closes.	F1 in the all-bundles overlay
+SHOPUI_BUNDLES_HELP	Tab and Shift+Tab change month; Up and Down at the edge of a month do too. Arrows move between the bundles. Enter opens one. Escape closes.	F1 in the all-bundles overlay
 SHOPUI_ALL_BUNDLES	All bundles	overlay name
+SHOPUI_PURCHASE_CLOSE_HINT	{0}. Press Enter or Escape to close.	0=game's failure text
+SHOPUI_PURCHASE_HELP	Please wait for the request to finish. If it fails, Enter or Escape closes this message.	F1 on the purchase wait overlay
+SHOPUI_BIG_CARD_HELP	Left and Right arrows change card. Up and Down read the card line by line. Enter buys it when it is for sale. Escape closes.	F1 on the big card view
+SHOPUI_OPENS_BROWSER	{0}, opens in your web browser	0=button name
+SHOPUI_ODDS_HELP	Up and Down read the odds line by line. Enter opens the full odds in your web browser. Escape closes.	F1 on booster odds
+SHOPUI_CHECKING_CODE	Checking the code	redeem code submitted

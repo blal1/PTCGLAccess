@@ -65,6 +65,15 @@ internal static class PopupUtils
         else AccessibilityMgr.ShowUI(ui);
     }
 
+    // The overlay's own navigation is the authority on whether it is open: lobby popups do not go through
+    // OverlayManager, and a HUB overlay closed through it only disables its canvas (activeInHierarchy stays true).
+    public static bool IsOverlayOpen(OverlayScreenGroup? overlay)
+    {
+        if (overlay == null) return false;
+        try { return overlay.IsOpen(); }
+        catch { return overlay.gameObject.activeInHierarchy; }   // no navigation assigned
+    }
+
     // OverlayManager is the authority on which overlay is open: a HUB overlay closed through it only disables
     // its canvas, so activeInHierarchy stays true.
     public static bool IsCurrentOverlay(OverlayScreenGroup? overlay)

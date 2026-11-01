@@ -43,6 +43,17 @@ internal sealed class AccessibleBattleSettings : AccessibleUI
         }
     }
 
+    // The gear clicked with the mouse (a sighted helper, or the prefab's own wiring) opens the same panel.
+    [HarmonyPatch(typeof(BattleSettings), "Show")]
+    private static class ShowHook
+    {
+        private static void Postfix(BattleSettings __instance)
+        {
+            s_instance.m_settings = __instance;
+            if (!AccessibilityMgr.IsFocused(s_instance)) AccessibilityMgr.ShowUI(s_instance);
+        }
+    }
+
     // Called by AccessibleBattleScreen on Escape. Returns false (and says so) if the menu can't be found.
     internal static bool TryOpen() => s_instance.Open();
 
@@ -58,9 +69,7 @@ internal sealed class AccessibleBattleSettings : AccessibleUI
         }
         m_settings = settings;
         try { settings.Show(); } catch (Exception ex) { Log.Error($"BattleSettings.Show threw: {ex.Message}"); }
-        if (AccessibilityMgr.IsFocused(this)) Rebuild();
-        else AccessibilityMgr.ShowUI(this);
-        return true;
+        return true;   // ShowHook puts the UI up
     }
 
     public string GetHelp() => LocalizationUtils.Get(LocalizationKey.BATTLE_MENU_HELP);
@@ -108,7 +117,11 @@ internal sealed class AccessibleBattleSettings : AccessibleUI
     {
         if (m_settings == null) return;
 
-        var items = m_settings.GetComponentsInChildren<Selectable>(includeInactive: false)
+        // The tabbed layout keeps its tabs on a BattleSettingsSwitcher above the controller: read from there.
+        var switcher = UnityEngine.Object.FindObjectsByType<BattleSettingsSwitcher>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .FirstOrDefault(sw => ReferenceEquals(GameReflect.ReadField<BattleSettings>(sw, "_settingsController"), m_settings));
+        Component root = switcher != null ? switcher : m_settings;
+        var items = root.GetComponentsInChildren<Selectable>(includeInactive: false)
             .Where(s => s != null && s.gameObject.activeInHierarchy && s is not Scrollbar)
             .OrderBy(s => ReadingOrder(s.transform))
             .ToList();

@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
-using TMPro;
-using TPCI.Localization;
 using TPCI.UI.Screens;
+using UnityEngine;
 using UnityEngine.UI;
 using static Accessibility.GameReflect;
 
@@ -74,14 +73,13 @@ internal sealed class AccessibleErrorOverlay : AccessibleUI
         AccessibilityMgr.HideUI(this);
     }
 
-    // The error line + the user-action line, preferring the localized component then the raw TMP.
+    // What is visible: SetErrorText writes the raw TMP without touching the LocText, so a LocText's CurrentText can be
+    // left over from an earlier error. Both visible and different means both are on screen.
     private string Message()
     {
-        var parts = new List<string>(2);
-        var err = PopupUtils.Loc(ReadField<LocText>(m_overlay, "errorLocText")) ?? PopupUtils.Text(ReadField<TMP_Text>(m_overlay, "errorText"));
-        if (err != null) parts.Add(err);
-        var act = PopupUtils.Loc(ReadField<LocText>(m_overlay, "userActionLocText")) ?? PopupUtils.Text(ReadField<TMP_Text>(m_overlay, "userActionText"));
-        if (act != null) parts.Add(act);
+        var parts = new List<string>(4);
+        foreach (var field in new[] { "errorText", "errorLocText", "userActionText", "userActionLocText" })
+            if (PopupUtils.Text(ReadField<Component>(m_overlay, field)) is { } s && !parts.Contains(s)) parts.Add(s);
         return string.Join(". ", parts);
     }
 

@@ -67,4 +67,13 @@ public sealed partial class LocalizationKey
     public static readonly LocalizationKey POPUP_RANK_ONE_POINT_GAINED = new(nameof(POPUP_RANK_ONE_POINT_GAINED));
     public static readonly LocalizationKey POPUP_RANK_POINTS_GAINED = new(nameof(POPUP_RANK_POINTS_GAINED));
     #endregion
+    public static readonly LocalizationKey POPUP_LEVEL_FORMAT = new(nameof(POPUP_LEVEL_FORMAT));
+    public static readonly LocalizationKey POPUP_SEASON_MATCHES_FORMAT = new(nameof(POPUP_SEASON_MATCHES_FORMAT));
+    public static readonly LocalizationKey POPUP_UNLOCK_COST_FORMAT = new(nameof(POPUP_UNLOCK_COST_FORMAT));
+    public static readonly LocalizationKey POPUP_UNLOCK_BALANCE_FORMAT = new(nameof(POPUP_UNLOCK_BALANCE_FORMAT));
+    public static readonly LocalizationKey POPUP_GIFT_CONTENTS_FORMAT = new(nameof(POPUP_GIFT_CONTENTS_FORMAT));
+    public static readonly LocalizationKey POPUP_GENERIC_HELP = new(nameof(POPUP_GENERIC_HELP));
+    public static readonly LocalizationKey POPUP_CONSENT_ACCESSIBILITY_HELP = new(nameof(POPUP_CONSENT_ACCESSIBILITY_HELP));
+    public static readonly LocalizationKey POPUP_CONNECTION_POOR = new(nameof(POPUP_CONNECTION_POOR));
+    public static readonly LocalizationKey POPUP_CONNECTION_RESTORED = new(nameof(POPUP_CONNECTION_RESTORED));
 }

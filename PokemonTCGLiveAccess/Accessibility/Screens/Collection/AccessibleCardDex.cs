@@ -155,9 +155,16 @@ internal sealed class AccessibleCardDex : AccessibleScreen
         if (cur == null) return;
         if (cur == m_infoBtn) { m_infoBtn!.onClick.Invoke(); return; }
         if (m_masterSel != null && cur == m_masterSel) { m_collections?.ToggleClassificationAndRefreshDisplay(); return; }
-        if (m_masterSel != null) { m_gallery?.ToggleLandscapeSortingOverlay(); return; }   // not info/master ⇒ the SORT control
-        // Master toggle couldn't be identified — drive the control's own (prefab-wired) action.
-        if (cur is Toggle tg) tg.isOn = !tg.isOn;
+        // Only the real SORT control opens the sort overlay: this section also holds the Card collection / Research
+        // missions tabs and the collector stats button, which must do their own thing.
+        if (cur.gameObject.name.IndexOf("sort", StringComparison.OrdinalIgnoreCase) >= 0
+            || cur == ReadField<Button>(m_controller, "sortOrderBtn")
+            || (cur is Button sortBtn && UiLabels.HasHandler(sortBtn, "ToggleLandscapeSortingOverlay")))
+        {
+            m_gallery?.ToggleLandscapeSortingOverlay();
+            return;
+        }
+        if (cur is Toggle tg) tg.isOn = true;   // tabs: Enter selects, never un-toggles
         else if (cur is Button bt) bt.onClick.Invoke();
     }
 

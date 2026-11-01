@@ -29,5 +29,11 @@ public sealed partial class LocalizationKey
     public static readonly LocalizationKey SHOPUI_ITEM = new(nameof(SHOPUI_ITEM));
     public static readonly LocalizationKey SHOPUI_BUNDLES_HELP = new(nameof(SHOPUI_BUNDLES_HELP));
     public static readonly LocalizationKey SHOPUI_ALL_BUNDLES = new(nameof(SHOPUI_ALL_BUNDLES));
+    public static readonly LocalizationKey SHOPUI_PURCHASE_CLOSE_HINT = new(nameof(SHOPUI_PURCHASE_CLOSE_HINT));
+    public static readonly LocalizationKey SHOPUI_PURCHASE_HELP = new(nameof(SHOPUI_PURCHASE_HELP));
+    public static readonly LocalizationKey SHOPUI_BIG_CARD_HELP = new(nameof(SHOPUI_BIG_CARD_HELP));
+    public static readonly LocalizationKey SHOPUI_OPENS_BROWSER = new(nameof(SHOPUI_OPENS_BROWSER));
+    public static readonly LocalizationKey SHOPUI_ODDS_HELP = new(nameof(SHOPUI_ODDS_HELP));
+    public static readonly LocalizationKey SHOPUI_CHECKING_CODE = new(nameof(SHOPUI_CHECKING_CODE));
     #endregion
 }

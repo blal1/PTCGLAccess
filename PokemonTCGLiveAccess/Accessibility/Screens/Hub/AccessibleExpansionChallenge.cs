@@ -6,7 +6,9 @@ using System.Reflection;
 using HarmonyLib;
 using SharedLogicUtils.source.DataTypes;
 using TPCI.Coroutines;
+using _Rainier.Scripts.Managers.FeatureFlagManager;
 using TPCI.Localization;
+using TPCI.UI.Screens.ExpansionChallenge;
 using UnityEngine;
 using UnityEngine.UI;
 using static Accessibility.GameReflect;
@@ -31,10 +33,8 @@ namespace Accessibility;
 // Everything is the game's own buttons + KeyboardNavigator; Enter fires each button's wired onClick, so there's no
 // parallel "ops" path. All spoken text is read live from the game's LocTexts / battle-pass data.
 //
-// NOTE: the tier track is a virtualized EnhancedScroller, so only the cells the game currently has spawned (the
-// screenful around the player's level) expose reward buttons — the rest of a long pass isn't keyboard-reachable yet
-// (same limitation as the shop's "view all" overlay). COLLECT ALL claims every earned reward regardless, which
-// covers the common case.
+// The tier track is a virtualized EnhancedScroller that only spawns the cells on screen, so the tier list reads the pass
+// data and covers every tier; Enter scrolls the tier into view, then presses its real button once the cell exists.
 //
 // FTUE (the Battle Pass tutorial coaches the tier reward, elementPos 8 / TierZero): same model as AccessibleProfile —
 // collapse to the coached button, follow it when it moves, stay silent while the tutorial dialogue speaks.
@@ -50,14 +50,21 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
     private static readonly FieldInfo? s_slotItem = AccessTools.Field(typeof(ProductItemSummarySlot), "currentItem");
     private static readonly FieldInfo? s_slotCount = AccessTools.Field(typeof(ProductItemSummarySlot), "numberOfItems");
 
-    private readonly List<KeyboardNavigator> m_groups = new();
+    private readonly List<INavSection> m_groups = new();
+    private readonly DataListSection m_tiers;
     private int m_activeGroup = -1;
     private HUBExpansionChallengeScreenController? m_controller;
     private string m_lastContentSig = string.Empty;
     private int m_questsGroupIndex = -1;
     private int m_firstContentGroupIndex = -1;
+    private int m_pressRank = -1;
+    private int m_pressFrames;
 
-    private AccessibleExpansionChallenge() => FtueTracker.FocusedElementChanged += OnFtueFocusChanged;
+    private AccessibleExpansionChallenge()
+    {
+        FtueTracker.FocusedElementChanged += OnFtueFocusChanged;
+        m_tiers = new DataListSection(this, LocalizationKey.HUB_REWARDS, TierCount, TierRowLabel, PressTier, horizontal: true);
+    }
 
     [HarmonyPatch(typeof(HUBExpansionChallengeScreenController), "OnActivate")]
     private static class ActivateHook
@@ -119,7 +126,7 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
             return;
         }
         var g = m_groups[m_activeGroup];
-        if (prevIndex >= 0 && prevIndex < g.Count) g.FocusIndex(prevIndex, announce: true, interrupt: false);
+        if (g is KeyboardNavigator nav && prevIndex >= 0 && prevIndex < nav.Count) nav.FocusIndex(prevIndex, announce: true, interrupt: false);
         else g.RefocusCurrent(announce: true, interrupt: false);
     }
 
@@ -130,6 +137,7 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
             AccessibilityMgr.ClearScreen(this);
             return;
         }
+        PollTierPress();
         // React to a content change (quests refreshed, a reward claimed, a level-up scrolling the tier track) by
         // rebuilding the section list, silently, keeping the place. Gated off during FTUE (tutorial-driven focus).
         if (!FtueTracker.FtueIsRunning && ContentSig() != m_lastContentSig)
@@ -171,6 +179,7 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
 
     private void RebuildGroups()
     {
+        foreach (var old in m_groups.OfType<KeyboardNavigator>()) old.Detach();
         m_groups.Clear();
         m_questsGroupIndex = -1;
         m_firstContentGroupIndex = -1;
@@ -191,8 +200,6 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         var questButtons = QuestButtons();
         known.UnionWith(questButtons);
         var collectAll = CollectAllButton();
-        var tierButtons = TierButtons();
-        known.UnionWith(tierButtons);
 
         // 2. Header controls (the "(i)" info button, premium-pass button).
         var passItems = HeaderControls(known, collectAll);
@@ -210,22 +217,23 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
             if (m_firstContentGroupIndex < 0) m_firstContentGroupIndex = m_groups.Count - 1;
         }
 
-        // 4. Rewards — COLLECT ALL (when shown) then the visible tier reward buttons.
-        var rewardItems = new List<Selectable>();
-        if (collectAll != null && collectAll.isActiveAndEnabled) rewardItems.Add(collectAll);
-        rewardItems.AddRange(tierButtons);
-        if (rewardItems.Count > 0)
+        // 4. Rewards — COLLECT ALL (when shown) then every tier. A first entry starts at the player's tier.
+        if (collectAll != null && collectAll.isActiveAndEnabled)
+            AddGroup(new List<Selectable> { collectAll }, _ => LocalizationUtils.Get(LocalizationKey.HUB_COLLECT_ALL), null);
+        if (TierCount() > 0)
         {
-            AddGroup(rewardItems, TierLabel, LocalizationUtils.Get(LocalizationKey.HUB_REWARDS));
+            if (m_activeGroup < 0) m_tiers.SetIndex(Mathf.Clamp(m_controller.serverData?.highestUnlockedRank ?? 0, 0, TierCount() - 1));
+            m_groups.Add(m_tiers);
             if (m_firstContentGroupIndex < 0) m_firstContentGroupIndex = m_groups.Count - 1;
         }
     }
 
-    private void AddGroup(List<Selectable> items, KeyboardNavigator.LabelResolver resolver, string? groupName)
+    private KeyboardNavigator AddGroup(List<Selectable> items, KeyboardNavigator.LabelResolver resolver, string? groupName)
     {
         var g = new KeyboardNavigator(this) { GroupName = groupName, OnBack = HubUi.OpenOverflowMenu };
         g.SetItems(items, resolver);
         m_groups.Add(g);
+        return g;
     }
 
     private int PickDefaultGroup()
@@ -235,9 +243,8 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         return 0;
     }
 
-    // Signature of the meaningful screen state: each quest's claim/ready state, the unlocked/redeemed tier marks, the
-    // visible tier-cell count, and whether COLLECT ALL shows. Changes on a quest refresh / claim, a level-up, or the
-    // tier track scrolling — the events that alter the section list.
+    // Signature of the meaningful screen state: each quest's claim/ready state, the unlocked/redeemed tier marks, and
+    // whether COLLECT ALL shows. Changes on a quest refresh / claim or a level-up — the events that alter the section list.
     private string ContentSig()
     {
         if (m_controller == null) return "none";
@@ -245,11 +252,10 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         var sd = c.serverData;
         var unlocked = sd != null ? sd.highestUnlockedRank : -1;
         var claimed = Safe(() => sd?.highestRedeemedRank != null ? sd.highestRedeemedRank.GetHighestClaimedRewardsTier() : -1, -1);
-        var tiles = Safe(() => c.tiers != null && c.tiers.Scroller != null ? c.tiers.Scroller.ActiveCellViews.Count : 0, 0);
         var collectAll = CollectAllButton() is { } ca && ca.isActiveAndEnabled;
         var quests = string.Concat(QuestPanels().Select(p => !p.gameObject.activeInHierarchy ? "-"
             : Active(ReadField<GameObject>(p, "readyToCollectHolder")) ? "R" : Active(ReadField<GameObject>(p, "comeBackLaterHolder")) ? "C" : "P"));
-        return quests + "|" + unlocked + "|" + claimed + "|" + tiles + "|" + collectAll;
+        return quests + "|" + unlocked + "|" + claimed + "|" + collectAll;
     }
 
     private void OnContentChanged()
@@ -264,7 +270,7 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         }
         m_activeGroup = Mathf.Clamp(prevGroup < 0 ? PickDefaultGroup() : prevGroup, 0, m_groups.Count - 1);
         var g = m_groups[m_activeGroup];
-        if (prevIndex >= 0 && prevIndex < g.Count) g.FocusIndex(prevIndex, announce: false);
+        if (g is KeyboardNavigator nav && prevIndex >= 0 && prevIndex < nav.Count) nav.FocusIndex(prevIndex, announce: false);
         else g.RefocusCurrent(announce: false);
     }
 
@@ -291,23 +297,39 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         return holder != null ? holder.GetComponentInChildren<Button>(includeInactive: false) : null;
     }
 
-    // The reward buttons of the tier cells the scroller currently has spawned (the screenful around the player's
-    // level), left-to-right.
-    private List<Selectable> TierButtons()
+    private int TierCount()
     {
-        var items = new List<Selectable>();
+        var tiers = m_controller != null ? m_controller.tiers : null;
+        return tiers != null && tiers.Scroller != null ? Safe(() => tiers.GetNumberOfCells(tiers.Scroller), 0) : 0;
+    }
+
+    // Enter on a tier: bring its cell on screen; the press happens when the scroller has spawned it (PollTierPress).
+    private void PressTier(int rank)
+    {
+        var tiers = m_controller != null ? m_controller.tiers : null;
+        if (tiers == null || tiers.Scroller == null) return;
+        tiers.Scroller.JumpToDataIndex(tiers.ViewMode == ExpansionChallengeTiersController.Mode.HORIZONTAL ? rank : TierCount() - 1 - rank);
+        m_pressRank = rank;
+        m_pressFrames = 30;
+    }
+
+    private void PollTierPress()
+    {
+        if (m_pressRank < 0) return;
         var sc = m_controller != null && m_controller.tiers != null ? m_controller.tiers.Scroller : null;
-        if (sc == null) return items;
-        var cells = sc.ActiveCellViews;
-        for (var i = 0; i < cells.Count; i++)
+        var cells = sc != null ? sc.ActiveCellViews : null;
+        for (var i = 0; cells != null && i < cells.Count; i++)
         {
-            if (cells.data[i] is ExpansionChallengeTierView view && view.tierRewardController != null)
+            if (cells.data[i] is ExpansionChallengeTierView view && view.rank == m_pressRank && view.tierRewardController != null
+                && view.tierRewardController.RewardButton is { } b && b.isActiveAndEnabled)
             {
-                var b = view.tierRewardController.RewardButton;
-                if (b != null && b.isActiveAndEnabled) items.Add(b);
+                m_pressRank = -1;
+                if (b.IsInteractable()) b.onClick.Invoke();
+                else AccessibilityMgr.Output(this, TierRowLabel(view.rank), interrupt: true);   // nothing to do on this tier
+                return;
             }
         }
-        return items.OrderBy(s => HubUi.ReadingOrder(s.transform)).ToList();
+        if (--m_pressFrames <= 0) m_pressRank = -1;
     }
 
     // The header region's interactable buttons (info "(i)", premium pass), discovered by exclusion: anything under the
@@ -404,19 +426,15 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
         return null;
     }
 
-    private string TierLabel(Selectable s)
+    private string TierRowLabel(int rank)
     {
-        if (s == CollectAllButton()) return LocalizationUtils.Get(LocalizationKey.HUB_COLLECT_ALL);
-        var view = s.GetComponentInParent<ExpansionChallengeTierView>();
-        if (view == null) return KeyboardNavigator.DefaultLabel(s);
-
         var parts = new List<string>();
-        var num = HubUi.Text(view.indexTxt_Unlocked) ?? HubUi.Text(view.indexTxt_Locked);
-        parts.Add(num == null ? LocalizationUtils.Get(LocalizationKey.HUB_TIER) : LocalizationUtils.Format(LocalizationKey.HUB_TIER_FORMAT, num));
+        var num = Safe<object?>(() => ExpansionPassTierIndexConverter.TierIndexToDisplayLabel(rank, ManagerSingleton<FeatureFlagManagerSingleton>.instance.Provider), rank);
+        parts.Add(LocalizationUtils.Format(LocalizationKey.HUB_TIER_FORMAT, num!));
         var tiers = m_controller != null ? m_controller.tiers : null;
-        var rewards = tiers != null ? Safe(() => DescribeRewards(tiers.GetRewards(view.rank, view.rank)), "") : "";
+        var rewards = tiers != null ? Safe(() => DescribeRewards(tiers.GetRewards(rank, rank)), "") : "";
         if (rewards.Length > 0) parts.Add(rewards);
-        if (TierState(view.rank) is { } state) parts.Add(state);
+        if (TierState(rank) is { } state) parts.Add(state);
         return string.Join(", ", parts);
     }
 
@@ -543,14 +561,14 @@ internal sealed class AccessibleExpansionChallenge : AccessibleScreen
             OnContentChanged();
             return;
         }
-        foreach (var g in m_groups) g.Detach();
+        foreach (var g in m_groups.OfType<KeyboardNavigator>()) g.Detach();
         m_groups.Clear();
         m_questsGroupIndex = -1;
         m_firstContentGroupIndex = -1;
         m_lastContentSig = ContentSig();
-        AddGroup(new List<Selectable> { target }, KeyboardNavigator.DefaultLabel, null);
+        var coached = AddGroup(new List<Selectable> { target }, KeyboardNavigator.DefaultLabel, null);
         // A coached Toggle is a tab, so Enter must SELECT it — see FtueTracker.
-        m_groups[0].RadioToggleMode = target is Toggle;
+        coached.RadioToggleMode = target is Toggle;
         m_activeGroup = 0;
         m_groups[0].FocusFirst(announce: true, interruptPrior: true);
     }

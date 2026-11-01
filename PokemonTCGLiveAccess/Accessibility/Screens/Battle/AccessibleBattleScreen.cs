@@ -4,6 +4,7 @@ using System.Linq;
 using HarmonyLib;
 using MatchLogic;
 using RainierClientSDK;
+using TPCI.Localization;
 using TPCI.Rainier.Match.Cards;
 using TPCI.Rainier.Match.Cards.Ownership;
 using UnityEngine;
@@ -142,9 +143,13 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
             AccessibilityMgr.OutputNotification(LocalizationUtils.Get(__result ? LocalizationKey.BATTLE_COIN_HEADS : LocalizationKey.BATTLE_COIN_TAILS));
     }
 
+    // The running match, for the UIs that open over this screen. Unity null once the scene is gone.
+    internal static MatchManager? CurrentManager => s_instance.m_manager != null ? s_instance.m_manager : null;
+
     private void OnStartGame(MatchManager mgr)
     {
         m_manager = mgr;
+        MatchAnnouncements.ResetForNewMatch();
         m_phase = mgr.currentState;
         Log.Info($"Battle start: ftueGoverns={FtueTracker.FtueGovernsMatch(mgr)}");
         HookSelectionState(mgr);
@@ -381,20 +386,9 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         else if (m_doneFocused && Keyboard.current?.anyKey.wasPressedThisFrame == true && !AccessibleKey.NEXT_SECTION.IsPressed()) m_doneFocused = false;
 
         // Zone jump keys (HS "look at" style). Shift = opponent's equivalent where it exists.
-        if (AccessibleKey.BATTLE_MY_ACTIVE.IsPressed()) { FocusZone(BattleBoardReader.Zone.MyActive); return; }
-        if (AccessibleKey.BATTLE_OPP_ACTIVE.IsPressed()) { FocusZone(BattleBoardReader.Zone.OppActive); return; }
-        if (AccessibleKey.BATTLE_MY_BENCH.IsPressed()) { FocusZone(BattleBoardReader.Zone.MyBench); return; }
-        if (AccessibleKey.BATTLE_OPP_BENCH.IsPressed()) { FocusZone(BattleBoardReader.Zone.OppBench); return; }
-        if (AccessibleKey.BATTLE_MY_HAND.IsPressed()) { FocusZone(BattleBoardReader.Zone.MyHand); return; }
-        if (AccessibleKey.BATTLE_OPP_HAND.IsPressed()) { FocusZone(BattleBoardReader.Zone.OppHand); return; }
-        if (AccessibleKey.BATTLE_MY_DISCARD.IsPressed()) { FocusZone(BattleBoardReader.Zone.MyDiscard); return; }
-        if (AccessibleKey.BATTLE_OPP_DISCARD.IsPressed()) { FocusZone(BattleBoardReader.Zone.OppDiscard); return; }
-        if (AccessibleKey.BATTLE_MY_DECK.IsPressed()) { FocusZone(BattleBoardReader.Zone.MyDeck); return; }
-        if (AccessibleKey.BATTLE_OPP_DECK.IsPressed()) { FocusZone(BattleBoardReader.Zone.OppDeck); return; }
-        if (AccessibleKey.BATTLE_MY_PRIZES.IsPressed()) { FocusZone(BattleBoardReader.Zone.MyPrize); return; }
-        if (AccessibleKey.BATTLE_OPP_PRIZES.IsPressed()) { FocusZone(BattleBoardReader.Zone.OppPrize); return; }
-        if (AccessibleKey.BATTLE_STADIUM.IsPressed()) { FocusZone(BattleBoardReader.Zone.Stadium); return; }
-        if (AccessibleKey.BATTLE_STATUS.IsPressed()) { AnnounceStatus(); return; }
+        if (BattleBoardReader.PressedZone() is { } zone) { FocusZone(zone); return; }
+        if (MatchAnnouncements.TryHandleInfoKey()) return;
+        if (AccessibleKey.BATTLE_EMOTES.IsPressed()) { AccessibleEmoteMenu.TryOpen(); return; }
         if (AccessibleKey.BATTLE_INSPECT.IsPressed()) { EnterCardView(); return; }
         if (AccessibleKey.BATTLE_END_TURN.IsPressed()) { EndTurn(); return; }
 
@@ -528,9 +522,11 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         }
     }
 
-    private void AnnounceStatus()
+    internal static string StatusText() => s_instance.BuildStatus();
+
+    private string BuildStatus()
     {
-        if (m_manager == null) return;
+        if (m_manager == null) return LocalizationUtils.Get(LocalizationKey.BATTLE_NAME);
         var parts = new List<string> { PhaseText(m_phase) ?? LocalizationUtils.Get(LocalizationKey.BATTLE_NAME) };
         // Surface the tutorial objective on demand — gives a reliable "what does it want me to do?"
         // answer when the FTUE is mid-step (the T key the player already uses for status).
@@ -542,7 +538,8 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         var oppActive = BattleBoardReader.GetCards(m_manager, BattleBoardReader.Zone.OppActive).FirstOrDefault();
         if (myActive != null) parts.Add(LocalizationUtils.Format(LocalizationKey.BATTLE_STATUS_MY_ACTIVE, BattleBoardReader.ShortSummary(myActive)));
         if (oppActive != null) parts.Add(LocalizationUtils.Format(LocalizationKey.BATTLE_STATUS_OPP_ACTIVE, BattleBoardReader.ShortSummary(oppActive)));
-        Say(string.Join(". ", parts));
+        parts.AddRange(MatchAnnouncements.StatusLines(m_manager));
+        return string.Join(". ", parts);
     }
 
     private void EndTurn()
@@ -613,7 +610,7 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         // this is the menu's own instruction ("Attach N energy to your Pokémon"), which is also the answer
         // to "why is Done unavailable".
         string msg = ActiveMessageBar()?.CurrText?.Trim() ?? "";
-        if (msg.Length > 0) Say(msg);
+        if (msg.Length > 0 && !MatchAnnouncements.JustSpoken(msg)) Say(msg);   // the message-bar hook may have said it
     }
 
     // The real Done button on the game's message bar (CentralMessageBar.DoneButtonTransform). Null when
@@ -672,6 +669,8 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
     // of closing the viewer. "Is a viewer open" / "close the viewer" must cover all three.
     private bool InspectionOpen() => OpenInspection() != null;
 
+    private bool m_cvPileOnly;   // reading a pile card with no game viewer open (see EnterCardView)
+
     private BattleMenu? OpenInspection()
     {
         var m = m_manager;
@@ -700,9 +699,24 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
     {
         if (m_manager == null) return;
         if (InspectionOpen()) { CloseInspection(); m_mode = Mode.Nav; m_cvCard = null; m_cvLines = null; return; }   // toggle off an already-open viewer (e.g. FTUE)
+        m_cvPileOnly = false;
         if (m_zoneCards == null || m_card < 0 || m_card >= m_zoneCards.Count) return;
         var card = m_zoneCards[m_card];
         if (card == null) return;
+
+        // A card in a pile (discard, Lost Zone). CardPileOwner's click opens the WHOLE pile's menu, on its
+        // first card, so the viewer would show another card than the one being read. The reading is ours
+        // anyway, and is all this mode needs, so no game overlay opens for it.
+        if (card.owner is CardPileOwner)
+        {
+            m_cvPileOnly = true;
+            m_cvCard = card;
+            m_cvLines = BattleBoardReader.DetailLines(card);
+            m_cvLine = -1;
+            m_mode = Mode.CardView;
+            Say(LocalizationKey.BATTLE_CARD_VIEW, BattleBoardReader.CardNameWithType(card));
+            return;
+        }
 
         // isAltPress: true forces the INSPECTION path (matching the game's own Card3D.OnCardClicked,
         // which always forwards true) — without it, your own Pokémon with a usable action would open the
@@ -726,7 +740,7 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
     private void HandleCardView()
     {
         // Exit if the viewer was closed externally (the game/FTUE dismissed it).
-        if (!InspectionOpen()) { m_mode = Mode.Nav; m_cvCard = null; m_cvLines = null; return; }
+        if (!m_cvPileOnly && !InspectionOpen()) { m_mode = Mode.Nav; m_cvCard = null; m_cvLines = null; return; }
 
         if (AccessibleKey.READ_NEXT_LINE.IsPressed()) { CvReadLine(1); return; }
         if (AccessibleKey.READ_PREV_LINE.IsPressed()) { CvReadLine(-1); return; }
@@ -753,7 +767,9 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
 
     private void ExitCardView()
     {
-        CloseInspection();
+        if (m_cvPileOnly) Say(LocalizationKey.BATTLE_CARD_VIEW_CLOSED);
+        else CloseInspection();
+        m_cvPileOnly = false;
         m_mode = Mode.Nav;
         m_cvCard = null;
         m_cvLines = null;
@@ -848,13 +864,19 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         bool stadiumCard = m_zone == BattleBoardReader.Zone.Stadium && myTurn
                            && card.cardInfo != null && card.cardInfo.activeUsableActions != null
                            && card.cardInfo.activeUsableActions.Count > 0;
+        // A discard-pile card with a usable ability (DiscardDisplayOverlay's tap): the same AttackOverlay, with
+        // the pile overlay's mover and no HUD. The pile grid is skipped: the mod already reads the pile.
+        bool discardCard = m_zone == BattleBoardReader.Zone.MyDiscard && myTurn
+                           && card.cardInfo?.activeUsableActions != null && card.cardInfo.activeUsableActions.Count > 0
+                           && !card.positioner.isAnimating && !card.IsInOperation();
         if (overlayCard || stadiumCard) TryOpenAttackOverlay(card);
+        else if (discardCard) TryOpenDiscardOverlay(card);
 
         m_actions = BuildActions(card);
         if (m_actions.Count == 0)
         {
             Log.Info($"OpenActionMenu no actions '{BattleBoardReader.CardName(card)}' zone={m_zone} overlayCard={overlayCard} canPlace={canPlace}: {PlayDiag(card)}");
-            if (overlayCard || stadiumCard) TryCloseAttackOverlay();
+            if (overlayCard || stadiumCard || discardCard) TryCloseAttackOverlay();
             Say(LocalizationKey.BATTLE_NO_ACTIONS, BattleBoardReader.CardName(card));
             return;
         }
@@ -888,6 +910,19 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
             if (!overlay.isOpen) overlay.Show(card);
         }
         catch (Exception ex) { Log.Error($"Battle: AttackOverlay.Show threw: {ex.Message}"); }
+    }
+
+    private void TryOpenDiscardOverlay(Card3D card)
+    {
+        try
+        {
+            var overlay = m_manager?.attackOverlay;
+            if (overlay == null) return;
+            if (overlay.isOpen) overlay.Close();   // Show is a no-op over an open overlay: see TryOpenAttackOverlay
+            var pile = UnityEngine.Object.FindFirstObjectByType<DiscardDisplayOverlay>(FindObjectsInactive.Include);
+            overlay.Show(card, ReadField<CardMover>(pile, "attackOverlayMover"), showHud: false);
+        }
+        catch (Exception ex) { Log.Error($"Battle: discard AttackOverlay.Show threw: {ex.Message}"); }
     }
 
     private void TryCloseAttackOverlay()
@@ -979,7 +1014,8 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         // Hand cards are played through the game's native targeting flow, invoked directly from
         // OpenActionMenu (StartPickup → hold-and-drop for target cards, or the no-target
         // auto-play for Item/Trainer/Supporter) — never via direct ops or this action menu.
-        if (where != PlayerPos.ACTIVE && where != PlayerPos.BENCH && !isStadium) return list;
+        bool isDiscard = where == PlayerPos.DISCARD && info.activeUsableActions != null && info.activeUsableActions.Count > 0;
+        if (where != PlayerPos.ACTIVE && where != PlayerPos.BENCH && !isStadium && !isDiscard) return list;
 
         // Drive the game's REAL attack overlay options (opened in OpenActionMenu). Clicking an
         // option's OnClick() is the exact sighted-player flow (→ TryUseAction → confirmations →
@@ -1003,7 +1039,7 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         // spotlight. Reading canRetreat alone missed the spotlight, letting a retreat fire during a
         // tutorial step that forbids it. Clean "Retreat" label (no card-action detail/name). Never
         // on a stadium (it has no retreat — its overlay's RetreatOption is hidden anyway).
-        var retreat = isStadium ? null : overlay.RetreatOption;
+        var retreat = isStadium || isDiscard ? null : overlay.RetreatOption;
         if (retreat != null)
             list.Add(new BattleAction
             {
@@ -1038,6 +1074,17 @@ internal sealed class AccessibleBattleScreen : AccessibleScreen
         bool named = action != null && !string.IsNullOrEmpty(action.actionName);
         string shown = named ? action!.actionName : LocalizationUtils.Get(isAttack ? LocalizationKey.BATTLE_ATTACK : LocalizationKey.BATTLE_USE_ABILITY);
         string detail = named ? BattleBoardReader.ActionDetail(card, shown) : "";
+        // The rename, damage and cost the widget shows this match; an effect can change all three.
+        if (action is CardAction cardAction && !string.IsNullOrEmpty(cardAction.overrideNameLocID)
+            && LocalizationUtils.TryGetGame(cardAction.overrideNameLocID) is { } renamed)
+            shown = renamed;
+        if (opt is AttackOption attackOption && PopupUtils.Text(ReadField<LocText>(attackOption, "damageAmountDisplay"))?.Trim() is { Length: > 0 } damage
+            && !detail.Contains(LocalizationUtils.Format(LocalizationKey.CARD_DAMAGE, damage)))
+            detail = detail.Length == 0
+                ? LocalizationUtils.Format(LocalizationKey.BATTLE_ATTACK_CURRENT_DAMAGE, damage)
+                : LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, LocalizationUtils.Format(LocalizationKey.BATTLE_ATTACK_CURRENT_DAMAGE, damage), detail);
+        if (opt is AttackOption && action is CardAction costed && BattleBoardReader.EnergyCostWords(card.cardInfo?.GetAttackEnergyCost(costed)) is { Length: > 0 } cost && !detail.Contains(cost))
+            detail = detail.Length == 0 ? cost : LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, cost, detail);
         string label = LocalizationUtils.Format(isAttack ? LocalizationKey.BATTLE_ATTACK_NAMED : LocalizationKey.BATTLE_ABILITY_NAMED, shown);
         if (detail.Length > 0) label = LocalizationUtils.Format(LocalizationKey.COMMON_STATE_FORMAT, label, detail);
         list.Add(new BattleAction { Label = label, CanUse = () => OptionUsable(opt) && !FtueStepUnarmed(card), Invoke = () => opt.OnClick() });

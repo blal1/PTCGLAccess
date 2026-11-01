@@ -22,7 +22,7 @@ internal static class BattleBoardReader
     internal enum Zone
     {
         MyActive, MyBench, MyHand, MyDiscard, MyDeck, MyPrize, MyLostZone,
-        OppActive, OppBench, OppHand, OppDiscard, OppDeck, OppPrize, Stadium,
+        OppActive, OppBench, OppHand, OppDiscard, OppDeck, OppPrize, OppLostZone, Stadium,
     }
 
     // Piles whose card identities are hidden (or that render as a stack) — report a count only.
@@ -44,6 +44,7 @@ internal static class BattleBoardReader
         Zone.OppDiscard => LocalizationKey.BATTLE_ZONE_OPP_DISCARD,
         Zone.OppDeck => LocalizationKey.BATTLE_ZONE_OPP_DECK,
         Zone.OppPrize => LocalizationKey.BATTLE_ZONE_OPP_PRIZES,
+        Zone.OppLostZone => LocalizationKey.BATTLE_ZONE_OPP_LOST_ZONE,
         _ => LocalizationKey.BATTLE_ZONE_STADIUM,
     });
 
@@ -62,9 +63,31 @@ internal static class BattleBoardReader
         Zone.OppDiscard => (PlayerPos.DISCARD, PlayerID.OPPONENT),
         Zone.OppDeck => (PlayerPos.DECK, PlayerID.OPPONENT),
         Zone.OppPrize => (PlayerPos.PRIZE, PlayerID.OPPONENT),
+        Zone.OppLostZone => (PlayerPos.LOSTZONE, PlayerID.OPPONENT),
         Zone.Stadium => (PlayerPos.STADIUM, PlayerID.LOCAL),
         _ => (PlayerPos.NONE, PlayerID.LOCAL),
     };
+
+    // The zone whose key was pressed this frame, for every surface that lets the player look at the board.
+    internal static Zone? PressedZone()
+    {
+        if (AccessibleKey.BATTLE_MY_ACTIVE.IsPressed()) return Zone.MyActive;
+        if (AccessibleKey.BATTLE_OPP_ACTIVE.IsPressed()) return Zone.OppActive;
+        if (AccessibleKey.BATTLE_MY_BENCH.IsPressed()) return Zone.MyBench;
+        if (AccessibleKey.BATTLE_OPP_BENCH.IsPressed()) return Zone.OppBench;
+        if (AccessibleKey.BATTLE_MY_HAND.IsPressed()) return Zone.MyHand;
+        if (AccessibleKey.BATTLE_OPP_HAND.IsPressed()) return Zone.OppHand;
+        if (AccessibleKey.BATTLE_MY_DISCARD.IsPressed()) return Zone.MyDiscard;
+        if (AccessibleKey.BATTLE_OPP_DISCARD.IsPressed()) return Zone.OppDiscard;
+        if (AccessibleKey.BATTLE_MY_DECK.IsPressed()) return Zone.MyDeck;
+        if (AccessibleKey.BATTLE_OPP_DECK.IsPressed()) return Zone.OppDeck;
+        if (AccessibleKey.BATTLE_MY_PRIZES.IsPressed()) return Zone.MyPrize;
+        if (AccessibleKey.BATTLE_OPP_PRIZES.IsPressed()) return Zone.OppPrize;
+        if (AccessibleKey.BATTLE_MY_LOST_ZONE.IsPressed()) return Zone.MyLostZone;
+        if (AccessibleKey.BATTLE_OPP_LOST_ZONE.IsPressed()) return Zone.OppLostZone;
+        if (AccessibleKey.BATTLE_STADIUM.IsPressed()) return Zone.Stadium;
+        return null;
+    }
 
     // Browsable card list for a zone (active/bench/hand/discard/lost zone/stadium). Empty if none.
     internal static List<Card3D> GetCards(MatchManager mgr, Zone z)
@@ -172,6 +195,8 @@ internal static class BattleBoardReader
                 : LocalizationUtils.Format(LocalizationKey.BATTLE_ENERGY_LIST, energyList));
             var toolList = NamesWithCounts(info.attachedTools);
             if (!string.IsNullOrEmpty(toolList)) lines.Add(LocalizationUtils.Format(LocalizationKey.BATTLE_TOOL_LIST, toolList));
+            lines.AddRange(AttachedCardText(info.attachedEnergy));
+            lines.AddRange(AttachedCardText(info.attachedTools));
 
             // Special conditions / buffs / debuffs currently on the Pokémon (poisoned, asleep, …).
             var status = StatusEffects(info);
@@ -226,6 +251,38 @@ internal static class BattleBoardReader
         return string.Join(", ", order.Select(nm => counts[nm] > 1 ? $"{counts[nm]} {nm}" : nm));
     }
 
+    // What each distinct attached card does (special Energy, Tools): printed on the card a sighted player can
+    // open. Basic Energy has no text, so it adds no line.
+    private static IEnumerable<string> AttachedCardText(List<CardEntity>? items)
+    {
+        var db = ManagerSingleton<CardDatabaseManager>.instance;
+        if (items == null || db == null) yield break;
+        var seen = new HashSet<string>();
+        foreach (var e in items)
+        {
+            var source = e == null ? null : CardInfo.Get(e.entityID)?.cardSourceID;
+            if (string.IsNullOrEmpty(source) || !seen.Add(source!)) continue;
+            var row = db.TryGetCardFromDatabase(source);
+            if (row == null) continue;
+            foreach (var a in row.GetActionInfos())
+                if (a != null && !string.IsNullOrEmpty(a.LocalizedDescription))
+                    yield return LocalizationUtils.Format(LocalizationKey.BATTLE_ATTACHED_CARD_TEXT, row.LocalizedCardName, a.LocalizedDescription);
+        }
+    }
+
+    // A card just revealed: the game's resolver, else the source id the reveal carries.
+    internal static string RevealedName(string entityID)
+    {
+        var name = EntityName(entityID);
+        if (name.Length > 0) return name;
+        try
+        {
+            var source = MatchManager.GetInstanceFromScene()?.GetSourceCardIdForEntity(entityID);
+            return ManagerSingleton<CardDatabaseManager>.instance?.TryGetCardFromDatabase(source)?.LocalizedCardName ?? "";
+        }
+        catch { return ""; }
+    }
+
     // The localized card name for an entity id — the game's own resolver (the same one the prompts use).
     // "" when it can't be resolved.
     internal static string EntityName(string? entityID)
@@ -249,12 +306,18 @@ internal static class BattleBoardReader
             var all = info.allStatusEffects;
             if (all == null || all.Count == 0) return "";
             var parts = new List<string>();
+            var provider = MatchManager.GetInstanceFromScene()?.attackOverlay?.DynamicStringProvider;
             foreach (var se in all)
             {
-                if (se == null) continue;
+                // The same filter and generator as the game's effects panel: hidden and VFX-only entries
+                // are not effects, and the generator fills the {slots} the raw loc string leaves empty.
+                if (se == null || se.statusEffect.hideVisualsFromClient || se.statusEffect.statusEffectType == StatusEffectKey.VFXEffect) continue;
                 string? text = null;
-                try { text = LocalizationUtils.TryGetGame(se.GetLocId()); }
+                try { if (provider != null) text = EffectDescriptionGenerator.GetEffectDescription(provider, se, info.isPlayer1, false); }
                 catch { }
+                if (string.IsNullOrWhiteSpace(text))
+                    try { text = LocalizationUtils.TryGetGame(se.GetLocId()); }
+                    catch { }
                 if (string.IsNullOrWhiteSpace(text)) text = se.actionName;
                 text = StripBraces(text);
                 if (!string.IsNullOrWhiteSpace(text)) parts.Add(text!.Trim());
@@ -359,7 +422,7 @@ internal static class BattleBoardReader
 
     // A Pokémon type enum name (cardTyping / weakness / resistance) as a spoken word. Unknown names
     // pass through unchanged.
-    private static string TypeWord(string type)
+    internal static string TypeWord(string type)
     {
         LocalizationKey? key = type switch
         {

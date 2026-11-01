@@ -9,7 +9,7 @@ SHOPUI_MORE	Plus	extra controls group
 SHOPUI_SCANNED_CODE	Code scanné	reward without a name
 SHOPUI_REMOVE	{0}, retirer	0=reward name
 SHOPUI_REWARD_ADDED	Récompense ajoutée	code redeemed
-SHOPUI_PRODUCT_HELP	Flèches : passer du bouton d'achat aux probabilités du booster. Entrée : activer. Échap : fermer.	F1 in the product overlay
+SHOPUI_PRODUCT_HELP	Flèches haut et bas : parcourir le bouton d'achat, les probabilités du booster, et les cartes, boosters et decks inclus. Entrée : activer. Échap : fermer.	F1 in the product overlay
 SHOPUI_BOOSTER_ODDS	Probabilités du booster	button
 SHOPUI_TIMES	{0} x {1}	0=item 1=count
 SHOPUI_CONTAINS	Contient {0}	0=item list
@@ -22,5 +22,11 @@ SHOPUI_ITEM_AVATAR	objet d'avatar	item type
 SHOPUI_ITEM_BUILD_BATTLE	coffret Construire et Combattre	item type
 SHOPUI_ITEM_FEATURE	fonctionnalité	item type
 SHOPUI_ITEM	objet	item type
-SHOPUI_BUNDLES_HELP	Flèches : changer de lot. Entrée : ouvrir. Échap : fermer.	F1 in the all-bundles overlay
+SHOPUI_BUNDLES_HELP	Tab et Maj+Tab : changer de mois ; haut et bas au bord d'un mois aussi. Flèches : changer de lot. Entrée : ouvrir. Échap : fermer.	F1 in the all-bundles overlay
 SHOPUI_ALL_BUNDLES	Tous les lots	overlay name
+SHOPUI_PURCHASE_CLOSE_HINT	{0}. Entrée ou Échap pour fermer.	0=game's failure text
+SHOPUI_PURCHASE_HELP	Patientez jusqu'à la fin de la demande. En cas d'échec, Entrée ou Échap ferme ce message.	F1 on the purchase wait overlay
+SHOPUI_BIG_CARD_HELP	Flèches gauche et droite : changer de carte. Haut et bas : lire la carte ligne par ligne. Entrée : l'acheter si elle est en vente. Échap : fermer.	F1 on the big card view
+SHOPUI_OPENS_BROWSER	{0}, s'ouvre dans votre navigateur	0=button name
+SHOPUI_ODDS_HELP	Haut et bas : lire les probabilités ligne par ligne. Entrée : ouvrir toutes les probabilités dans votre navigateur. Échap : fermer.	F1 on booster odds
+SHOPUI_CHECKING_CODE	Vérification du code	redeem code submitted

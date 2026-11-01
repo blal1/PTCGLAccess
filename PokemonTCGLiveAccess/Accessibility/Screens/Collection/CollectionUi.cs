@@ -3,7 +3,9 @@ using System.Linq;
 using TMPro;
 using TPCI.Localization;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using CardCategory = TPCI.Rainier.CardCategory;
 using static Accessibility.GameReflect;
 
 namespace Accessibility;
@@ -61,9 +63,44 @@ internal static class CollectionUi
         return btn != null && btn.isActiveAndEnabled && btn.IsInteractable() ? btn : null;
     }
 
-    // Every active button under a panel, in reading order.
+    // Every active button under a panel, in reading order. Card stubs are content, not controls.
     public static List<Selectable> Buttons(Component root) =>
-        InReadingOrder(root.GetComponentsInChildren<Button>(includeInactive: false).Where(b => b.isActiveAndEnabled).Cast<Selectable>());
+        InReadingOrder(root.GetComponentsInChildren<Button>(includeInactive: false).Where(b => b.isActiveAndEnabled && b.GetComponentInParent<CardStubParts>() == null).Cast<Selectable>());
+
+    // A category toggle's only text is its count badge: name it from the filter tab's loc id.
+    public static string CategoryLabel(GenericFilterGroup<CardCategory>? selector, Selectable s)
+    {
+        string? name = null;
+        if (selector != null)
+            foreach (var tab in selector.AllTabs)
+                if (tab?.Toggle != null && tab.Toggle.MyToggle == s) name = LocalizationUtils.TryGetGame(tab.FilterName)?.Trim();
+        var count = Text(s.GetComponentInChildren<TMP_Text>(includeInactive: false));
+        var label = name ?? count ?? KeyboardNavigator.ResolveBaseLabel(s);
+        if (name != null && count != null) label = LocalizationUtils.Format(LocalizationKey.COMMON_STATE_FORMAT, name, LocalizationUtils.Format(LocalizationKey.COLLECTION_CARDS, count));
+        return TabState(label, s);
+    }
+
+    // The field an ExpandableSearchBar types into.
+    public static TMP_InputField? SearchField(ExpandableSearchBar? bar) => ReadField<TMP_InputField>(bar, "searchInput");
+
+    // Moving away from a text field must end its editing, or it keeps eating the keys meant for the next section.
+    public static void ReleaseTextField(TMP_InputField? field)
+    {
+        if (field == null) return;
+        field.DeactivateInputField();
+        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == field.gameObject) EventSystem.current.SetSelectedGameObject(null);
+    }
+
+    // The rule rows a validity drawer has spawned, read even while the drawer itself is collapsed.
+    public static List<string> ValidityRows(Component? panel)
+    {
+        var rows = new List<string>();
+        var drawer = panel != null ? panel.GetComponentInChildren<DeckValidityDrawer>(includeInactive: true) : null;
+        if (drawer == null) return rows;
+        foreach (var row in drawer.GetComponentsInChildren<ValidationInfo>(includeInactive: true))
+            if (Text(ReadField<LocText>(row, "message")) is { } text) rows.Add(text);
+        return rows;
+    }
 
     public static string? Text(LocText? t)
     {

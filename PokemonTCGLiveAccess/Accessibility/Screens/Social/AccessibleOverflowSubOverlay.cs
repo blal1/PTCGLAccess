@@ -38,7 +38,17 @@ internal sealed class AccessibleOverflowSubOverlay : AccessibleUI
         m_nav = new KeyboardNavigator(this) { AllowTab = false, OnBack = Close };
     }
 
-    public void HandleInput() => m_nav.HandleInput();
+    public void HandleInput()
+    {
+        // Backstop if the shared OnDeActivate hook was missed.
+        if (!PopupUtils.IsOverlayOpen(m_group))
+        {
+            m_group = null;
+            AccessibilityMgr.HideUI(this);
+            return;
+        }
+        m_nav.HandleInput();
+    }
 
     public string GetHelp() => LocalizationUtils.Get(LocalizationKey.SOCIAL_PANEL_HELP);
 

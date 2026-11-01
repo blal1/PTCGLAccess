@@ -29,6 +29,8 @@ internal sealed class BnbPlaySection : AccessibleElement, INavSection
     private Button? m_play;            // the buy-in / PLAY button
     private GameObject? m_buyInRoot;   // EventBuyInButton root (for the full PLAY + cost/FREE label)
     private Toggle[] m_pips = Array.Empty<Toggle>();   // page dots — count + which is on = page X of N
+    private CaptionedImagePagesUi? m_carousel;
+    private PagePipNavigationListener? m_pipNav;
     private TMP_Text? m_timerTitle;    // "ENDS IN"
     private TMP_Text? m_timerValue;    // "1W 4D"
 
@@ -57,6 +59,7 @@ internal sealed class BnbPlaySection : AccessibleElement, INavSection
 
         var view = ReadField<BnBBuyInScreenViewBindings>(ctrl, "buyInScreen");
         var carousel = view != null ? ReadField<CaptionedImagePagesUi>(view, "instructionCarousel") : null;
+        m_carousel = carousel;
         m_caption = carousel != null ? ReadField<TextMeshProUGUI>(carousel, "captionDisplay") : null;
 
         var buyIn = view != null ? ReadField<EventBuyInButton>(view, "eventBuyInButton") : null;
@@ -72,7 +75,9 @@ internal sealed class BnbPlaySection : AccessibleElement, INavSection
             var buttons = view.GetComponentsInChildren<Button>(includeInactive: false);
             m_prev = buttons.FirstOrDefault(b => b.gameObject.name.IndexOf("Prev", StringComparison.OrdinalIgnoreCase) >= 0);
             m_next = buttons.FirstOrDefault(b => b.gameObject.name.IndexOf("Next", StringComparison.OrdinalIgnoreCase) >= 0);
-            m_pips = view.GetComponentsInChildren<Toggle>(includeInactive: false)
+            // The pip listener knows its toggles; object names are only the fallback.
+            m_pipNav = view.GetComponentInChildren<PagePipNavigationListener>(includeInactive: false);
+            m_pips = ReadField<Toggle[]>(m_pipNav, "orderedToggles") ?? view.GetComponentsInChildren<Toggle>(includeInactive: false)
                 .Where(t => t.gameObject.name.IndexOf("Pip", StringComparison.OrdinalIgnoreCase) >= 0)
                 .ToArray();
         }
@@ -110,8 +115,8 @@ internal sealed class BnbPlaySection : AccessibleElement, INavSection
         // Up/Down at the section edges are consumed by AccessibleHome for section escape.
         if (AccessibleKey.READ_NEXT_MENU_OPTION.IsPressed()) Move(+1);
         else if (AccessibleKey.READ_PREV_MENU_OPTION.IsPressed()) Move(-1);
-        else if (IsInstructionsRow && AccessibleKey.READ_NEXT_ITEM.IsPressed()) Press(m_next);
-        else if (IsInstructionsRow && AccessibleKey.READ_PREV_ITEM.IsPressed()) Press(m_prev);
+        else if (IsInstructionsRow && AccessibleKey.READ_NEXT_ITEM.IsPressed()) Page(m_next, +1);
+        else if (IsInstructionsRow && AccessibleKey.READ_PREV_ITEM.IsPressed()) Page(m_prev, -1);
         else if (AccessibleKey.CONFIRM.IsPressed())
         {
             if (IsPlayRow) Press(m_play);
@@ -142,6 +147,20 @@ internal sealed class BnbPlaySection : AccessibleElement, INavSection
         m_index = next;
         s_rememberedRow = next;
         AnnounceRow(interrupt: true);
+    }
+
+    // No Prev/Next button found by name (the name search is a guess about the prefab): the carousel's own page call,
+    // which is what those buttons end up doing. The poll then reads the new caption.
+    private void Page(Button? button, int dir)
+    {
+        if (button != null) { Press(button); return; }
+        var count = m_pips.Length;
+        if (m_carousel == null || count == 0) return;
+        var cur = Math.Max(0, Array.FindIndex(m_pips, t => t != null && t.isOn));
+        var page = cur + dir;
+        if (page < 0 || page >= count) return;
+        m_carousel.RenderPage(page);
+        m_pipNav?.EnablePipAtIndex(page);
     }
 
     // Turns the page / buys in through the game's own button.

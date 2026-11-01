@@ -95,12 +95,12 @@ BATTLE_NO_ENERGY_TO_MOVE_FROM	Pas d'Énergie à déplacer depuis {0}	0=Pokémon
 BATTLE_FROM_SOURCE	depuis {0}	0=Pokémon the energy came from
 BATTLE_CAN_RECEIVE_ENERGY	peut recevoir l'Énergie	move energy target tag
 BATTLE_HAS_ENERGY_TO_MOVE	a de l'Énergie à déplacer	move energy source tag
-BATTLE_HELP	A, B, C : votre Pokémon Actif, votre Banc, votre main. X, D, P : votre pile de défausse, votre deck, vos cartes Récompense. Avec Maj : ceux de l'adversaire. S : Stade. Gauche et Droite : les cartes. Bas et Haut : lire la carte ligne par ligne. Maj+Bas : lire jusqu'à la fin. Début, Fin, chiffres : aller à une carte. Entrée : agir sur la carte. I : examiner la carte. T : état du combat. E : finir votre tour. Tab : le bouton Terminé quand il existe. Échap : menu du combat.	F1 on the board
+BATTLE_HELP	A, B, C : votre Pokémon Actif, votre Banc, votre main. X, D, P : votre pile de défausse, votre deck, vos cartes Récompense. Avec Maj : ceux de l'adversaire. S : Stade. Gauche et Droite : les cartes. Bas et Haut : lire la carte ligne par ligne. Maj+Bas : lire jusqu'à la fin. Début, Fin, chiffres : aller à une carte. Entrée : agir sur la carte. I : examiner la carte. L : votre Zone perdue. Maj+L : celle de l'adversaire. T : état, temps et jetons. G : effets de votre côté, Maj+G : du côté adverse. H : historique du combat. M : émoticônes. E : finir votre tour. Tab : le bouton Terminé quand il existe. Échap : menu du combat.	F1 on the board
 BATTLE_HELP_HOLDING	Vous tenez une carte. Allez à sa destination avec A, B, S et les flèches, puis Entrée pour la poser. Retour arrière : annuler.	F1 while holding a card
 BATTLE_HELP_ACTION_MENU	Haut et Bas : les actions. Entrée : utiliser l'action. Retour arrière ou Échap : retour au plateau.	F1 in the action menu
 BATTLE_HELP_CARD_VIEW	Bas et Haut : lire la carte ligne par ligne. Retour arrière, Échap ou I : fermer la carte.	F1 in the card view
 BATTLE_HELP_CONFIRM_PLAY	Entrée : jouer la carte. Retour arrière ou Échap : annuler.	F1 on the "Use X?" question
-BATTLE_PROMPT_HELP	Gauche et Droite : les choix. Bas et Haut : lire la carte ligne par ligne. Entrée : choisir. Chiffres : aller à un choix. Tab : le choix Terminé.	F1 on a battle choice
+BATTLE_PROMPT_HELP	Gauche et Droite : les choix. Bas et Haut : lire la carte ligne par ligne. Entrée : choisir. Chiffres : aller à un choix. Tab : le choix Terminé. Retour arrière : remettre une carte choisie. Touches de zone : consulter le plateau. T : état. G : effets. H : historique du combat.	F1 on a battle choice
 BATTLE_PROMPT_NEXT_COUNTER	Prêt pour le marqueur suivant	repeatable damage effect
 BATTLE_PROMPT_NO_VALID_CARDS	Aucune carte valide à choisir	fallback for the game's own message
 BATTLE_PROMPT_CHOICE_REQUIRED	Un choix est requis	unsupported prompt with no question
@@ -165,7 +165,7 @@ BATTLE_RESULT_PASS_XP	Expérience du Passe de combat	reward tile
 BATTLE_RESULT_RANK_POINTS	Points de classement	reward tile
 BATTLE_RESULT_ITEM_TIMES	{0} fois {1}	0=item 1=count
 BATTLE_RESULT_REWARDS	Récompenses du match	fallback for the game's own header
-BATTLE_RESULT_HELP	Entrée ou Espace : continuer. Sur la page des statistiques, Haut et Bas : les boutons, Entrée : appuyer.	F1 on the result screen
+BATTLE_RESULT_HELP	Entrée ou Espace : continuer. Sur la page des statistiques, Haut et Bas : les boutons, Entrée : appuyer, H : historique du combat.	F1 on the result screen
 BATTLE_INTRO_OPPONENT	Adversaire	unnamed opponent
 BATTLE_INTRO_VERSUS	Contre {0}	0=opponent
 BATTLE_INTRO_VERSUS_RANK	Contre {0}, {1}	0=opponent 1=rank
@@ -176,3 +176,47 @@ BATTLE_MULLIGAN_ONE	{0} a dû faire 1 mulligan avant de piocher un Pokémon de b
 BATTLE_MULLIGAN_MANY	{0} a dû faire {1} mulligans avant de piocher un Pokémon de base.	0=player 1=count
 BATTLE_MULLIGAN_HIDDEN	cartes cachées	no revealed names
 BATTLE_MULLIGAN_NTH	Mulligan {0} : {1}	0=number 1=cards
+BATTLE_ZONE_OPP_LOST_ZONE	Zone perdue adverse	Zone name
+BATTLE_RPS_ROCK	pierre	Fallback for option_rock
+BATTLE_RPS_PAPER	feuille	Fallback for option_paper
+BATTLE_RPS_SCISSORS	ciseaux	Fallback for option_scissors
+BATTLE_RPS_RESULT	Vous avez choisi {0}, votre adversaire a choisi {1}. {2}	0 mine, 1 theirs, 2 game result text
+BATTLE_PROMPT_REFLIP_RESULT	Pour le moment : {0} face, {1} pile	Coin flips before a reflip choice
+BATTLE_PROMPT_RANGE_OPTIONAL	Facultatif, jusqu'à {0}	Selection bounds
+BATTLE_PROMPT_RANGE_BETWEEN	Entre {0} et {1}	Selection bounds
+BATTLE_PROMPT_RANGE_EXACT	Exactement {0}	Selection bounds
+BATTLE_PROMPT_EXCLUSIVE_GROUPS	Choisissez dans un seul groupe	exclusiveGroupings
+BATTLE_PROMPT_NOT_SELECTABLE	non sélectionnable	Greyed-out carousel card
+BATTLE_PROMPT_HIDDEN_CARDS	{0} cartes cachées, non sélectionnables	Face-down cards in a carousel
+BATTLE_PROMPT_NOTHING_SELECTED	Rien de sélectionné ici	Backspace with no chosen card
+BATTLE_PROMPT_MAX_SELECTED	Maximum atteint. Désélectionnez d'abord une carte, ou choisissez Terminé	Board selection at max
+BATTLE_ATTACHED_CARD_TEXT	{0} : {1}	Name and text
+BATTLE_ATTACK_CURRENT_DAMAGE	actuellement {0} dégâts	Live damage on the attack widget
+BATTLE_REVEALED_CARDS	Révélé : {0}	Revealed card names
+BATTLE_TIME_ACTION_WARNING	Plus que {0} secondes pour agir	Action timer warning
+BATTLE_TIME_CLOCK_WARNING	Votre temps de match : il reste {0}	Match clock warning
+BATTLE_STATUS_OPPONENT	Adversaire : {0}	T key
+BATTLE_STATUS_TURN	Tour {0}	T key
+BATTLE_STATUS_ACTION_TIME	{0} secondes pour agir	T key
+BATTLE_STATUS_MY_CLOCK	Votre temps : {0}	T key
+BATTLE_STATUS_OPP_CLOCK	Temps adverse : {0}	T key
+BATTLE_TOKEN_VSTAR	Capacité VSTAR	Token
+BATTLE_TOKEN_GX	Attaque-GX	Token
+BATTLE_TOKEN_MINE_AVAILABLE	Votre {0} : disponible	Token
+BATTLE_TOKEN_MINE_USED	Votre {0} : utilisée	Token
+BATTLE_TOKEN_OPP_AVAILABLE	{0} adverse : disponible	Token
+BATTLE_TOKEN_OPP_USED	{0} adverse : utilisée	Token
+BATTLE_EFFECTS_MINE	Effets de votre côté	G key
+BATTLE_EFFECTS_OPP	Effets du côté adverse	Shift+G
+BATTLE_EFFECTS_NONE	{0} : aucun	G key, 0 = title
+BATTLE_LOG_TITLE	Historique du combat	H key
+BATTLE_LOG_EMPTY	L'historique du combat est vide	H key
+BATTLE_LOG_HELP	Haut et Bas : ligne précédente ou suivante. Gauche et Droite : tour précédent ou suivant. Début et Fin : première ou dernière ligne. Retour arrière, Échap ou H : fermer.	F1
+BATTLE_REVIEW_HELP	Touches de zone : consulter une zone. Gauche et Droite : cartes. Haut et Bas : lire la carte. T : état. G : effets. H : historique. Retour arrière ou Échap : revenir au choix.	F1
+BATTLE_EMOTE_MENU	Émoticônes	M key
+BATTLE_EMOTE_RECEIVED	Votre adversaire envoie : {0}	Opponent emote
+BATTLE_EMOTE_MUTE	Couper les émoticônes adverses	Menu option
+BATTLE_EMOTE_UNMUTE	Réactiver les émoticônes adverses	Menu option
+BATTLE_EMOTE_MUTED	Émoticônes adverses coupées	Answer
+BATTLE_EMOTE_UNMUTED	Émoticônes adverses réactivées	Answer
+BATTLE_EMOTE_UNAVAILABLE	Les émoticônes ne sont pas disponibles pour le moment	Answer

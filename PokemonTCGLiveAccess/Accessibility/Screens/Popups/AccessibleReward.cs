@@ -5,8 +5,10 @@ using HarmonyLib;
 using RainierClientSDK.source.Commerce;
 using SharedLogicUtils.source.DataTypes;
 using TMPro;
+using TPCI.Localization;
 using UnityEngine;
 using UnityEngine.UI;
+using static Accessibility.GameReflect;
 
 namespace Accessibility;
 
@@ -33,6 +35,9 @@ internal sealed class AccessibleReward : AccessibleUI
     private Selectable? m_lastFtueTarget;
     private bool m_speakTitle = true;
 
+    // True while this overlay is the one being presented here (see AccessibleGenericOverlay).
+    internal static bool IsPresenting(OverlayScreenGroup overlay) => s_instance.m_controller != null && s_instance.m_controller.activeOverlay == overlay;
+
     private AccessibleReward()
     {
         m_nav = new KeyboardNavigator(this) { AllowTab = false };
@@ -50,10 +55,10 @@ internal sealed class AccessibleReward : AccessibleUI
         // showing. CRITICAL: a HUB overlay closed via OverlayManager (OnDeActivate) only disables its
         // CANVAS — the GameObject stays activeInHierarchy — so that flag alone is unreliable (a nested
         // reward, e.g. claiming on Casual → an item-grant reveal pops back to here, left us STUCK).
-        // The authoritative signal is OverlayManager: when our overlay is no longer the current open
-        // overlay, the flow is done.
+        // The authoritative signal is the overlay's own navigation: lobby popups (B&B rewards) use the
+        // lobby's, not OverlayManager, so asking OverlayManager let go of them at once.
         var ov = m_controller != null ? m_controller.activeOverlay : null;
-        if (ov == null || !ov.gameObject.activeInHierarchy || !PopupUtils.IsCurrentOverlay(ov)
+        if (ov == null || !ov.gameObject.activeInHierarchy || !PopupUtils.IsOverlayOpen(ov)
             // SECOND stranding mode (post-match reward freeze, from a real log): collecting a reward opens a
             // nested item-grant reveal OVER this overlay; when that reveal finishes the controller tears down
             // THIS overlay's reward content (its COLLECT button + slots) but does NOT fire CloseScreen or
@@ -140,13 +145,15 @@ internal sealed class AccessibleReward : AccessibleUI
         var tier = m_controller?.activeCustomView as SingleTierCustomView;
         if (tier != null)
         {
-            if (PopupUtils.Text(tier.tierTxt) is { } t) parts.Add(t.Any(char.IsLetter) ? t : LocalizationUtils.Format(LocalizationKey.POPUP_TIER_FORMAT, t));
+            AddTier(parts, tier.tierTxt);
         }
         else if (m_controller?.activeOverlay is ContentItemRewardOverlay generic)
         {
             if (PopupUtils.Text(generic.titleTxt) is { } title) parts.Add(title);
             if (PopupUtils.Text(generic.contentCountTxt) is { } count) parts.Add(count);
         }
+        AddPopupHeader(parts);
+        AddViewDetails(parts);
 
         if ((m_controller?.activeOverlay as ContentItemRewardOverlay)?.rewardHolder is { } holder && SummarizeRewards(holder) is { } rewards)
         {
@@ -158,7 +165,74 @@ internal sealed class AccessibleReward : AccessibleUI
         }
 
         if (tier != null && PopupUtils.Text(tier.bottomMessageTxt) is { } msg) parts.Add(msg);
+        AddViewFooter(parts);
         return parts.Count > 0 ? string.Join(", ", parts) : null;
+    }
+
+    private static void AddTier(List<string> parts, Component? tierText)
+    {
+        if (PopupUtils.Text(tierText) is { } t) parts.Add(t.Any(char.IsLetter) ? t : LocalizationUtils.Format(LocalizationKey.POPUP_TIER_FORMAT, t));
+    }
+
+    // Build & Battle popups carry their own header texts on the controller's object.
+    private void AddPopupHeader(List<string> parts)
+    {
+        if (m_controller == null) return;
+        if (m_controller.GetComponent<BuildAndBattleRewardCollectPopup>() is { } collect)
+            foreach (var field in new[] { "headerText", "notificationText", "bodyText", "modeText" })
+                AddText(parts, ReadField<TextMeshProUGUI>(collect, field));
+        else if (m_controller.GetComponent<BuildAndBattleForfeitRewardsPopup>() is { } forfeit)
+            AddText(parts, ReadField<TextMeshProUGUI>(forfeit, "bnbTitleText"));
+    }
+
+    private static void AddText(List<string> parts, Component? text)
+    {
+        if (PopupUtils.Text(text) is { } s && !parts.Contains(s)) parts.Add(s);
+    }
+
+    // What each custom view shows before the reward list.
+    private void AddViewDetails(List<string> parts)
+    {
+        switch (m_controller?.activeCustomView)
+        {
+            case LevelUpCustomView level:
+                var hexText = ReadField<LocText>(ReadField<LevelHex>(level, "levelHex"), "levelDisplayText");
+                if (PopupUtils.Text(hexText) is { } n) parts.Add(n.Any(char.IsLetter) ? n : LocalizationUtils.Format(LocalizationKey.POPUP_LEVEL_FORMAT, n));
+                break;
+            case LeagueRewardsCustomView league:
+                AddText(parts, ReadField<LocText>(league, "leagueNameText"));
+                break;
+            case SeasonRewardsCustomView season when season.matchChecks is { Length: > 0 } checks:
+                parts.Add(LocalizationUtils.Format(LocalizationKey.POPUP_SEASON_MATCHES_FORMAT, checks.Count(c => c != null && c.activeSelf), checks.Length));
+                break;
+            case MultiTierCustomView multi:
+                AddText(parts, multi.tierRangeTxt);
+                break;
+            case UnlockTierCustomView unlock:
+                AddTier(parts, unlock.tierTxt);
+                AddText(parts, unlock.bottomTierCountTxt);
+                break;
+            case ExpansionChallengeRewardsCustomView expansion:
+                // The view only shows a logo image. Same key as the Battle Pass screen.
+                var id = ReadField<RewardOverlaysController.ExpansionChallengeRewardsOptions>(expansion, "options")?.expansionId;
+                if (LocalizationUtils.TryGetGame("tcg_" + (id ?? "").ToLowerInvariant()) is { } name) parts.Add(name);
+                break;
+        }
+    }
+
+    // ... and after it: status, price, balance.
+    private void AddViewFooter(List<string> parts)
+    {
+        switch (m_controller?.activeCustomView)
+        {
+            case LeagueRewardsCustomView league:
+                AddText(parts, ReadField<LocText>(league, "statusText"));
+                break;
+            case UnlockTierCustomView unlock:
+                if (PopupUtils.Text(unlock.bottomCostTxt) is { } cost) parts.Add(LocalizationUtils.Format(LocalizationKey.POPUP_UNLOCK_COST_FORMAT, cost));
+                if (PopupUtils.Text(unlock.currencyTxt) is { } balance) parts.Add(LocalizationUtils.Format(LocalizationKey.POPUP_UNLOCK_BALANCE_FORMAT, balance));
+                break;
+        }
     }
 
     // Read a reward holder's spawned ProductItemSummarySlots by name + count. Shared with the season

@@ -95,5 +95,16 @@ public sealed partial class LocalizationKey
     public static readonly LocalizationKey COLLECTION_SETS = new(nameof(COLLECTION_SETS));
     public static readonly LocalizationKey COLLECTION_NEW_CARDS = new(nameof(COLLECTION_NEW_CARDS));
     public static readonly LocalizationKey COLLECTION_CARD_COLLECTION = new(nameof(COLLECTION_CARD_COLLECTION));
+    public static readonly LocalizationKey COLLECTION_DECK_VIEW_HELP = new(nameof(COLLECTION_DECK_VIEW_HELP));
+    public static readonly LocalizationKey COLLECTION_DECK_VIEW = new(nameof(COLLECTION_DECK_VIEW));
+    public static readonly LocalizationKey COLLECTION_CUSTOMIZE_HELP = new(nameof(COLLECTION_CUSTOMIZE_HELP));
+    public static readonly LocalizationKey COLLECTION_CUSTOMIZE = new(nameof(COLLECTION_CUSTOMIZE));
+    public static readonly LocalizationKey COLLECTION_CUSTOM_EQUIPPED = new(nameof(COLLECTION_CUSTOM_EQUIPPED));
+    public static readonly LocalizationKey COLLECTION_CUSTOM_BUYABLE = new(nameof(COLLECTION_CUSTOM_BUYABLE));
+    public static readonly LocalizationKey COLLECTION_BUY = new(nameof(COLLECTION_BUY));
+    public static readonly LocalizationKey COLLECTION_SET_COMPLETE_HELP = new(nameof(COLLECTION_SET_COMPLETE_HELP));
+    public static readonly LocalizationKey COLLECTION_NO_RESULTS = new(nameof(COLLECTION_NO_RESULTS));
+    public static readonly LocalizationKey COLLECTION_DECK_COUNT = new(nameof(COLLECTION_DECK_COUNT));
+    public static readonly LocalizationKey COLLECTION_CRAFT_ALL_HELP = new(nameof(COLLECTION_CRAFT_ALL_HELP));
     #endregion
 }

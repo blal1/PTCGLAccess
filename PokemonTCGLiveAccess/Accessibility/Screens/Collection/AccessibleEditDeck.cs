@@ -6,6 +6,7 @@ using CardDatabase.DataAccess;
 using HarmonyLib;
 using TMPro;
 using TPCI.Rainier.Features.DeckEditor;
+using TPCI.Rainier.Features.DeckEditor.Filters;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -100,6 +101,13 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
     // The sort / filter popups (AnimatedSetActive on the controller). When one is open we run a modal sort mode: focus
     // into its toggles, Tab is inert, Escape closes it.
     private AnimatedSetActive? m_sortPopup;   // the popup the modal mode is currently driving
+    private string m_sortSig = "";            // the popup's pages swap options without closing: rebuild when they change
+
+    // Card library search. Kept LAST in the Top list: inside a text field the arrows move the caret, so anything after
+    // it would be stranded.
+    private ExpandableSearchBar? m_search;
+    private TMP_InputField? m_searchField;
+    private bool m_searchOpened;
 
     // Tutorial guidance (FtueTracker owns the FTUE hooks). Card step: jump to the card the tutorial names. Non-card step
     // (category tab, Back...): the coached control is reparented under a Blocker, outside our sections, so present it alone.
@@ -160,6 +168,14 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
 
         // The sort / filter popup is its OWN modal: while it's open, drive only its options.
         if (HandleSortMode()) return;
+
+        // In the search field Escape must leave the field, not the editor; Enter goes to the results.
+        if (m_section == Section.Top && m_topNav.CurrentIsTextField)
+        {
+            if (!m_searchOpened) { m_searchOpened = true; m_search?.OpenSearch(); }
+            if (AccessibleKey.ESCAPE.IsPressed() || AccessibleKey.CONFIRM.IsPressed()) { EnterSection(Section.Library, interruptPrior: true); return; }
+        }
+        else if (AccessibleKey.READ_DECK_VALIDITY.IsPressed() && !KeyboardNavigator.IsTextInputFocused()) { ReadValidity(); return; }
 
         if (AccessibleKey.NEXT_SECTION.IsPressed()) { CycleSection(+1); return; }
         if (AccessibleKey.PREV_SECTION.IsPressed()) { CycleSection(-1); return; }
@@ -256,6 +272,9 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
         DiscoverExchangeButton(buttons);
         EnsureRenameButton(buttons);
         buttons = CollectionUi.InReadingOrder(buttons);
+        m_search = ReadField<ExpandableSearchBar>(m_controller, "collectionSearchBar");
+        m_searchField = CollectionUi.SearchField(m_search);
+        if (m_searchField != null && m_searchField.isActiveAndEnabled) buttons.Add(m_searchField);
         m_topNav.SetItems(buttons, TopLabel);
         // These buttons are scattered across the top bar AND the right deck panel, so auto-axis detection strands one
         // cluster. Force a flat Up/Down list so every option is reachable in reading order.
@@ -310,12 +329,45 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
 
     // The drawer's filtered collection finished (re)loading — initial open, category switch, search or filter. Refresh
     // our count and, if we're parked in the Library awaiting it, focus card 0.
+    //
+    // A search or filter also lands here with no category change: the cursor's index then points at another card, so
+    // find the same card again in the new list, and tell the player how many cards are left.
     private void OnCollectionChanged(int count)
     {
-        m_libCount = count;
-        if (m_controller == null || m_section != Section.Library || !m_libAwaitingLoad) return;
-        m_libAwaitingLoad = false;
-        if (count > 0) LibFocus(0, announce: true, interrupt: false);
+        try
+        {
+            var previous = m_libCount;
+            m_libCount = count;
+            if (m_controller == null) return;
+            if (m_libAwaitingLoad)
+            {
+                if (m_section != Section.Library) return;
+                m_libAwaitingLoad = false;
+                if (count > 0) LibFocus(0, announce: true, interrupt: false);
+                else AccessibilityMgr.Output(this, LocalizationUtils.Get(LocalizationKey.COLLECTION_NO_RESULTS), interrupt: false);
+                return;
+            }
+            if (count == previous) return;
+            if (m_libIndex >= 0 && count > 0)
+            {
+                var row = m_libCurrent is { } stack ? Row(stack) : null;
+                var index = row != null ? m_controller.CollectionDrawer.GetCardIndex(row.ArchetypeID) : -1;
+                LibFocus(index >= 0 && index < count ? index : 0, announce: false);
+            }
+            AccessibilityMgr.Output(this, count == 0 ? LocalizationUtils.Get(LocalizationKey.COLLECTION_NO_RESULTS)
+                : count == 1 ? LocalizationUtils.Get(LocalizationKey.COLLECTION_ONE_CARD)
+                : LocalizationUtils.Format(LocalizationKey.COLLECTION_CARDS, count), interrupt: false);
+        }
+        catch (Exception e) { Log.Error($"DeckEditor collection changed: {e}"); }
+    }
+
+    // V: why the deck is or is not legal, the rule rows of the validity drawer.
+    private void ReadValidity()
+    {
+        var rows = CollectionUi.ValidityRows(m_controller!.DeckPanel);
+        var valid = m_controller.DataDeck != null && m_controller.DataDeck.IsValidQuick(DeckEditorGameMode.CurrentGameMode);
+        var status = LocalizationUtils.Get(valid ? LocalizationKey.COLLECTION_VALID : LocalizationKey.COLLECTION_INVALID);
+        AccessibilityMgr.Output(this, rows.Count > 0 ? LocalizationUtils.Format(LocalizationKey.COLLECTION_TITLE_BODY, status, string.Join(". ", rows)) : status, interrupt: true);
     }
 
     private bool SectionHasContent(Section s) => s switch
@@ -354,6 +406,8 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
 
     private void EnterSection(Section s, bool interruptPrior)
     {
+        CollectionUi.ReleaseTextField(m_searchField);
+        m_searchOpened = false;
         // Fall through to a section that actually has content (e.g. empty deck → Library).
         if (!SectionHasContent(s))
         {
@@ -515,7 +569,7 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
     // Ownership is PER VERSION (a card's rarities are distinct CardIDs with separate owned counts), so the archetype
     // totals can BOTH look fine yet the deck still be invalid — e.g. you own 1 Budew of each of two rarities (2 owned)
     // and put 2 of the SAME rarity in the deck. HasUnownedVersionInDeck catches that hidden case.
-    private static string CardLabel(ArchetypeDBCards stack)
+    internal static string CardLabel(ArchetypeDBCards stack)
     {
         var parts = new List<string> { CardName(stack) };
         var inDeck = stack.TotalDeckQuantity();
@@ -533,7 +587,7 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
 
     private static string CardName(ArchetypeDBCards stack) => Row(stack) is { } row ? CardText.NameWithType(row) : stack.LocalizedCardName();
 
-    private static CardDataRow? Row(ArchetypeDBCards stack)
+    internal static CardDataRow? Row(ArchetypeDBCards stack)
     {
         var card = stack.GetPreferredDisplayCard();
         return card != null ? ManagerSingleton<CardDatabaseManager>.instance?.TryGetCardFromDatabase(card.CardID) : null;
@@ -854,17 +908,7 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
 
     // The category toggle's only visible text is its COUNT badge (e.g. "13"), so reading the text gave just a number.
     // Speak the category NAME from the filter tab's loc id, with the count as a qualifier: "Pokémon, 13 cards, selected".
-    private string CategoryLabel(Selectable s)
-    {
-        string? name = null;
-        if (m_categorySelector != null)
-            foreach (var tab in m_categorySelector.AllTabs)
-                if (tab?.Toggle != null && tab.Toggle.MyToggle == s) name = LocalizationUtils.TryGetGame(tab.FilterName)?.Trim();
-        var count = CollectionUi.Text(s.GetComponentInChildren<TMP_Text>(includeInactive: false));
-        var label = name ?? count ?? KeyboardNavigator.ResolveBaseLabel(s);
-        if (name != null && count != null) label = LocalizationUtils.Format(LocalizationKey.COMMON_STATE_FORMAT, name, LocalizationUtils.Format(LocalizationKey.COLLECTION_CARDS, count));
-        return CollectionUi.TabState(label, s);
-    }
+    private string CategoryLabel(Selectable s) => CollectionUi.CategoryLabel(m_categorySelector, s);
 
     // ── Sort / filter popup (modal) ──
 
@@ -882,18 +926,57 @@ internal sealed class AccessibleEditDeck : AccessibleScreen
             ReAnnounceCurrent(interrupt: true);
             return false;
         }
+        // !interactable keeps what the game disabled on purpose: the selected radio option can't be re-picked, and the
+        // player still needs to hear it. IsInteractable drops what a closed page's CanvasGroup hides.
+        var items = CollectionUi.InReadingOrder(popup.GetComponentsInChildren<Selectable>(includeInactive: false)
+            .Where(s => (s is Toggle || s is Button) && s.isActiveAndEnabled && (!s.interactable || s.IsInteractable())));
+        var sig = string.Join(",", items.Select(s => s.GetInstanceID()));
         if (popup != m_sortPopup)
         {
             m_sortPopup = popup;
-            var items = CollectionUi.InReadingOrder(popup.GetComponentsInChildren<Selectable>(includeInactive: false)
-                .Where(s => (s is Toggle || s is Button) && s.isActiveAndEnabled && s.IsInteractable()));
-            m_sortNav.SetItems(items);
+            m_sortSig = sig;
+            m_sortNav.SetItems(items, FilterLabel);
+            m_sortNav.ForceFlatVertical();
             AccessibilityMgr.Output(this, LocalizationUtils.Get(popup == filter ? LocalizationKey.COLLECTION_FILTER : LocalizationKey.COLLECTION_SORT_BY), interrupt: true);
             m_sortNav.FocusFirst(announce: true, interruptPrior: false);
         }
+        else if (sig != m_sortSig)
+        {
+            m_sortSig = sig;
+            var keep = m_sortNav.Current;
+            m_sortNav.SetItems(items, FilterLabel);
+            m_sortNav.ForceFlatVertical();
+            var i = keep != null ? items.IndexOf(keep) : -1;
+            m_sortNav.FocusIndex(i >= 0 ? i : 0, announce: i < 0);
+        }
         if (CollectionUi.BackPressed()) { popup.Hide(); return true; }   // the mode ends next frame once the popup is gone
+        if (AccessibleKey.CONFIRM.IsPressed() && m_sortNav.Current is Toggle) { m_sortNav.Activate(isSpaceKey: true); return true; }
         m_sortNav.HandleInput();
         return true;
+    }
+
+    // A filter option: its text (the game's id when icon-only), the group it belongs to, and whether it is on.
+    private static string FilterLabel(Selectable s)
+    {
+        var option = s.GetComponentInParent<CardFilterOptionDataHolder>()?.GetCardFilterOption();
+        if (option == null) return KeyboardNavigator.DefaultLabel(s);
+        var name = CollectionUi.FirstLetterText(s) ?? EnergyName(option.optionId) ?? LocalizationUtils.TryGetGame(option.optionId)?.Trim();
+        if (name == null) return KeyboardNavigator.DefaultLabel(s);
+        var group = CollectionUi.Text(s.GetComponentInParent<ExpandableFilterGroupParts>()?.titleText) ?? CollectionUi.Text(s.GetComponentInParent<EnergyFilterGroupParts>()?.titleText);
+        return CollectionUi.TabState(group != null ? LocalizationUtils.Format(LocalizationKey.COMMON_STATE_FORMAT, name, group) : name, s);
+    }
+
+    // Energy toggles are icons, loaded from Resources by optionId.
+    private static string? EnergyName(string? id)
+    {
+        var key = id?.ToLowerInvariant() ?? "";
+        var energy = key.Contains("fire") ? LocalizationKey.ENERGY_FIRE : key.Contains("grass") ? LocalizationKey.ENERGY_GRASS
+            : key.Contains("water") ? LocalizationKey.ENERGY_WATER : key.Contains("lightning") ? LocalizationKey.ENERGY_LIGHTNING
+            : key.Contains("psychic") ? LocalizationKey.ENERGY_PSYCHIC : key.Contains("fighting") ? LocalizationKey.ENERGY_FIGHTING
+            : key.Contains("dark") ? LocalizationKey.ENERGY_DARKNESS : key.Contains("metal") ? LocalizationKey.ENERGY_METAL
+            : key.Contains("fairy") ? LocalizationKey.ENERGY_FAIRY : key.Contains("dragon") ? LocalizationKey.ENERGY_DRAGON
+            : key.Contains("colorless") ? LocalizationKey.ENERGY_COLORLESS : null;
+        return energy != null ? LocalizationUtils.Get(energy) : null;
     }
 
     // ── Hooks ──

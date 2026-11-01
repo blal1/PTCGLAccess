@@ -4,6 +4,7 @@ using System.Reflection;
 using HarmonyLib;
 using TMPro;
 using TPCI.Localization;
+using TPCI.Rainier.UI.OverlayMenus;
 using UnityEngine.UI;
 using static Accessibility.GameReflect;
 
@@ -36,14 +37,17 @@ internal sealed class AccessibleModalContainer : AccessibleUI, ITitledComponent
     private int m_activeGroup;
     private ModalElementContainer? m_modal;
     private AccessibleComponent? m_parent;
+    private AppRatingPrompt? m_ratingPrompt;
+    private ModalElementContainer? m_lastHidden;
 
     public string? Title => m_modal != null ? PopupUtils.Text(ReadField<LocText>(m_modal, "titleText")) : null;
 
     public void HandleInput()
     {
-        if (m_modal == null)
+        // IsClosed: Hide() ends closed without passing through a method that tells us.
+        if (m_modal == null || m_modal.IsClosed)
         {
-            AccessibilityMgr.HideUI(this);
+            Release();
             return;
         }
         if (m_groups.Count == 0) return;
@@ -73,8 +77,24 @@ internal sealed class AccessibleModalContainer : AccessibleUI, ITitledComponent
         if (m_groups.Count > 0) PopupUtils.FocusQueued(m_groups[m_activeGroup]);
     }
 
+    private void Release()
+    {
+        m_modal = null;
+        foreach (var g in m_groups) g.Detach();
+        AccessibilityMgr.HideUI(this);
+    }
+
+    // Escape where the game allows it: a tap outside closes, or, on the app rating prompt whose blocker is
+    // CLICKTHROUGH, the "not now" the prefab wires to DismissWithDeferral.
+    private void Back(ModalElementContainer modal, bool canClose)
+    {
+        if (canClose) modal.Close();
+        else if (m_ratingPrompt != null) m_ratingPrompt.DismissWithDeferral();
+    }
+
     private void Open(ModalElementContainer modal)
     {
+        if (AccessibleBattlePrompt.OwnsModal(modal)) return;
         m_modal = modal;
         if (AccessibilityMgr.Focused != this) m_parent = AccessibilityMgr.Focused;
 
@@ -105,7 +125,7 @@ internal sealed class AccessibleModalContainer : AccessibleUI, ITitledComponent
         foreach (var items in new[] { content.ToList(), buttons.ToList() })
         {
             if (items.Count == 0) continue;
-            var g = new KeyboardNavigator(this) { AllowTab = false, OnBack = canClose ? modal.Close : null };
+            var g = new KeyboardNavigator(this) { AllowTab = false, OnBack = () => Back(modal, canClose) };
             g.SetItems(items);   // axes auto-detected from positions
             m_groups.Add(g);
         }
@@ -183,10 +203,55 @@ internal sealed class AccessibleModalContainer : AccessibleUI, ITitledComponent
     {
         private static void Postfix(ModalElementContainer __instance)
         {
-            if (s_instance.m_modal != __instance) return;
-            s_instance.m_modal = null;
-            foreach (var g in s_instance.m_groups) g.Detach();
-            AccessibilityMgr.HideUI(s_instance);
+            if (s_instance.m_modal == __instance) s_instance.Release();
+        }
+    }
+
+    // ModalPopup.OnDisable and some battle views close a modal through SnapClosed instead of Close. Their Hide() then
+    // Show() pairs put a drawer away for a moment: HandleInput lets go once it has finished closing, and this brings
+    // it back.
+    [HarmonyPatch(typeof(ModalElementContainer), "SnapClosed")]
+    private static class SnapClosedHook
+    {
+        private static void Postfix(ModalElementContainer __instance)
+        {
+            if (s_instance.m_modal == __instance) s_instance.Release();
+        }
+    }
+
+    [HarmonyPatch(typeof(ModalElementContainer), "Show")]
+    private static class ShowHook
+    {
+        private static void Postfix(ModalElementContainer __instance)
+        {
+            if (s_instance.m_modal == null && ReferenceEquals(s_instance.m_lastHidden, __instance)) s_instance.Open(__instance);
+        }
+    }
+
+    [HarmonyPatch(typeof(ModalElementContainer), "Hide")]
+    private static class HideHook
+    {
+        private static void Postfix(ModalElementContainer __instance)
+        {
+            if (s_instance.m_modal == __instance) s_instance.m_lastHidden = __instance;
+        }
+    }
+
+    [HarmonyPatch(typeof(OverlayScreenGroup), "OnActivate", new System.Type[0])]
+    private static class RatingOpenHook
+    {
+        private static void Postfix(OverlayScreenGroup __instance)
+        {
+            if (__instance is AppRatingPrompt prompt) s_instance.m_ratingPrompt = prompt;
+        }
+    }
+
+    [HarmonyPatch(typeof(OverlayScreenGroup), "OnDeActivate")]
+    private static class RatingCloseHook
+    {
+        private static void Postfix(OverlayScreenGroup __instance)
+        {
+            if (__instance == s_instance.m_ratingPrompt) s_instance.m_ratingPrompt = null;
         }
     }
 }

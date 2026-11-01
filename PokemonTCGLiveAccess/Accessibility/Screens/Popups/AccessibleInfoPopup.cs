@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -79,7 +80,9 @@ internal sealed class AccessibleInfoPopup : AccessibleUI
 
     // Base-typed + guarded: the patch lands on OverlayScreenGroup.Activate (shared by every overlay),
     // so the parameter MUST be the base type; we act only for InfoPopup instances.
-    [HarmonyPatch(typeof(OverlayScreenGroup), "Activate")]
+    // OnActivate, not Activate: it only runs when the overlay really opens (Activate refuses silently while busy, and
+    // a direct OpenOverlay skips it). CasualModeInfoPopup.Activate has set its texts by then.
+    [HarmonyPatch(typeof(OverlayScreenGroup), "OnActivate", new Type[0])]
     private static class ActivateHook
     {
         private static void Postfix(OverlayScreenGroup __instance)

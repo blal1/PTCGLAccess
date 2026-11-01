@@ -24,6 +24,8 @@ internal sealed class AccessibleSimpleMessage : AccessibleUI, ITitledComponent
     private readonly KeyboardNavigator m_nav;
     private SimpleMessage? m_msg;
     private AccessibleComponent? m_parent;
+    // Several SimpleMessage instances exist (login, consent, startup): one can open over another.
+    private readonly List<SimpleMessage> m_covered = new();
 
     private AccessibleSimpleMessage()
     {
@@ -57,6 +59,8 @@ internal sealed class AccessibleSimpleMessage : AccessibleUI, ITitledComponent
 
     private void Open(SimpleMessage msg)
     {
+        m_covered.Remove(msg);
+        if (m_msg != null && m_msg != msg) m_covered.Add(m_msg);
         m_msg = msg;
         if (AccessibilityMgr.Focused != this) m_parent = AccessibilityMgr.Focused;
 
@@ -104,9 +108,18 @@ internal sealed class AccessibleSimpleMessage : AccessibleUI, ITitledComponent
     {
         private static void Postfix(SimpleMessage __instance)
         {
+            s_instance.m_covered.Remove(__instance);
             if (s_instance.m_msg != __instance) return;
             s_instance.m_msg = null;
-            AccessibilityMgr.HideUI(s_instance);
+            var count = s_instance.m_covered.Count;
+            if (count == 0)
+            {
+                AccessibilityMgr.HideUI(s_instance);
+                return;
+            }
+            var previous = s_instance.m_covered[count - 1];
+            s_instance.m_covered.RemoveAt(count - 1);
+            s_instance.Open(previous);
         }
     }
 }

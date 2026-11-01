@@ -37,7 +37,7 @@ COLLECTION_NO_VERSIONS	No other versions	card detail
 COLLECTION_VERSION_N	Version {0}	0=index
 COLLECTION_OWNED_IN_DECK	{0} owned, {1} in deck	0=owned 1=in deck
 COLLECTION_CARD_DEX_DETAIL_HELP	Up and Down arrows move between the card, exchange and details sections; in the details, they read line by line. Left and Right arrows on the card show the previous or next card. Enter activates. Escape closes.	F1 in the Card Dex card detail
-COLLECTION_DECKS_HELP	Tab and Shift+Tab move between the top bar, the deck tabs, the deck list and the selected deck's panel. Arrows move inside a section. Enter opens or activates. Escape goes back.	F1 on the Decks screen
+COLLECTION_DECKS_HELP	Tab and Shift+Tab move between the top bar, the deck tabs, the filters (format, valid only, search), the deck list and the selected deck's panel. Arrows move inside a section. Enter opens or activates. V reads the selected deck and the rules it breaks. Escape goes back; in the search box, Enter or Escape goes to the deck list.	F1 on the Decks screen
 COLLECTION_DECKS	Decks	screen name fallback
 COLLECTION_DECK_GROUPING	Deck groups	tab group name
 COLLECTION_CREATE_DECK	Create a deck	fallback for the create-deck tile
@@ -47,7 +47,7 @@ COLLECTION_ACTIVE_FOR	active for {0}	0=game modes
 COLLECTION_ACTIVE	active	deck state
 COLLECTION_RETURN_TO_CHALLENGE	Return to the challenge	friend challenge return button
 COLLECTION_SET_ACTIVE	Set as active deck	button fallback
-COLLECTION_EDIT_DECK_HELP	Tab and Shift+Tab move between the top bar, the categories, the deck and the card library. Left and Right arrows move between cards; Up and Down read the card line by line. Enter picks up a card; Tab to the other list and press Enter to place it: library to deck adds it, deck to library removes it. I opens the card details. Escape cancels a held card or leaves the editor.	F1 in the deck editor
+COLLECTION_EDIT_DECK_HELP	Tab and Shift+Tab move between the top bar, the categories, the deck and the card library. Left and Right arrows move between cards; Up and Down read the card line by line. Enter picks up a card; Tab to the other list and press Enter to place it: library to deck adds it, deck to library removes it. I opens the card details. V reads why the deck is valid or not. The search box is the last item of the top bar; Enter or Escape there goes to the library. Escape cancels a held card or leaves the editor. Changing category clears the search.	F1 in the deck editor
 COLLECTION_CATEGORY	Category	deck editor tabs group
 COLLECTION_EXCHANGE_ALL_UNOWNED	Exchange all unowned cards	fallback label
 COLLECTION_EMPTY	{0}, empty	0=section name
@@ -90,3 +90,14 @@ COLLECTION_SET_VIEW	Set view	master/main set toggle fallback
 COLLECTION_SETS	Sets	Card Dex set carousel
 COLLECTION_NEW_CARDS	new cards	set has new cards
 COLLECTION_CARD_COLLECTION	Card collection	Card Dex grid
+COLLECTION_DECK_VIEW_HELP	Tab and Shift+Tab move between the cards, the categories and the buttons. Left and Right arrows change card; Up and Down read it line by line. Enter opens the big card. Escape closes.	F1 on the full deck view
+COLLECTION_DECK_VIEW	Deck contents	full deck view without a header
+COLLECTION_CUSTOMIZE_HELP	Tab and Shift+Tab change category: deck box, sleeve or coin. Left and Right arrows change item; an item you own is equipped at once. Up and Down move between the other controls, and Enter activates them. Escape goes back.	F1 on deck customization
+COLLECTION_CUSTOMIZE	Customize deck	screen name
+COLLECTION_CUSTOM_EQUIPPED	{0}, owned, equipped	0=item name
+COLLECTION_CUSTOM_BUYABLE	{0}, not owned, {1}	0=item name 1=price and currency
+COLLECTION_BUY	Buy	customization buy button
+COLLECTION_SET_COMPLETE_HELP	Enter or Escape closes this message once its animation has finished.	F1 on set complete
+COLLECTION_NO_RESULTS	No cards found	library search or filter empty
+COLLECTION_DECK_COUNT	{0} decks shown	0=count
+COLLECTION_CRAFT_ALL_HELP	Up and Down arrows move between the buttons. Left and Right read the cards to exchange; I opens the current card. Enter activates. Escape closes.	F1 on exchange all

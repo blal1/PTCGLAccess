@@ -43,3 +43,12 @@ POPUP_PACK	Booster	booster pack without a name
 POPUP_PACK_FORMAT	{0}, {1} cartes	sealed booster pack: 0=pack name 1=card count
 POPUP_RANK_ONE_POINT_GAINED	Plus 1 point de rang, {0} au total	after a ranked match: 0=new total
 POPUP_RANK_POINTS_GAINED	Plus {0} points de rang, {1} au total	after a ranked match: 0=points gained 1=new total
+POPUP_LEVEL_FORMAT	Niveau {0}	level-up reward: 0=level
+POPUP_SEASON_MATCHES_FORMAT	{0} combats de saison joués sur {1}	season reward: 0=played 1=required
+POPUP_UNLOCK_COST_FORMAT	Coût : {0}	unlock tier: 0=price
+POPUP_UNLOCK_BALANCE_FORMAT	Vous avez {0}	unlock tier: 0=balance as shown
+POPUP_GIFT_CONTENTS_FORMAT	Contenu : {0}	gift: 0=list of items
+POPUP_GENERIC_HELP	Flèches et Tab : se déplacer entre les boutons. Entrée : activer. Échap : fermer, si la fenêtre a un bouton de fermeture. Maj+Haut : relire le texte.	F1 on a popup with no dedicated component
+POPUP_CONSENT_ACCESSIBILITY_HELP	Flèches haut et bas : parcourir les réglages. Espace : changer un réglage. Entrée : activer un bouton.	F1 on the first-launch accessibility step
+POPUP_CONNECTION_POOR	Connexion perdue, tentative de reconnexion.	the reconnecting indicator appeared
+POPUP_CONNECTION_RESTORED	Connexion rétablie.	the reconnecting indicator went away

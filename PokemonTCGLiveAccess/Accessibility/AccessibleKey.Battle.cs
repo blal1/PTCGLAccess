@@ -21,11 +21,17 @@ public sealed partial class AccessibleKey
     public static readonly AccessibleKey BATTLE_MY_PRIZES = new(KeyCode.P);
     public static readonly AccessibleKey BATTLE_OPP_PRIZES = new(KeyCode.P, shift: true);
     public static readonly AccessibleKey BATTLE_STADIUM = new(KeyCode.S);
+    public static readonly AccessibleKey BATTLE_MY_LOST_ZONE = new(KeyCode.L);
+    public static readonly AccessibleKey BATTLE_OPP_LOST_ZONE = new(KeyCode.L, shift: true);
     #endregion
 
     #region Battle actions
     public static readonly AccessibleKey BATTLE_STATUS = new(KeyCode.T);
     public static readonly AccessibleKey BATTLE_INSPECT = new(KeyCode.I);
     public static readonly AccessibleKey BATTLE_END_TURN = new(KeyCode.E);
+    public static readonly AccessibleKey BATTLE_MY_EFFECTS = new(KeyCode.G);
+    public static readonly AccessibleKey BATTLE_OPP_EFFECTS = new(KeyCode.G, shift: true);
+    public static readonly AccessibleKey BATTLE_LOG = new(KeyCode.H);
+    public static readonly AccessibleKey BATTLE_EMOTES = new(KeyCode.M);
     #endregion
 }

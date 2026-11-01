@@ -29,6 +29,9 @@ internal sealed class AccessibleShopProduct : AccessibleUI
     private readonly KeyboardNavigator m_nav;
     private ShopProductOverlay? m_overlay;
     private Button? m_oddsButton;
+    private Button? m_buyButton;
+    private readonly Dictionary<Selectable, ProductItemSummarySlot> m_slotButtons = new();
+    private bool m_fresh;
 
     private AccessibleShopProduct()
     {
@@ -46,22 +49,27 @@ internal sealed class AccessibleShopProduct : AccessibleUI
     public void OnGainedFocus()
     {
         if (m_overlay == null) return;
+        // Back from a card, deck or odds view opened from a slot: same place.
+        if (!m_fresh && m_nav.Current != null) { m_nav.RefocusCurrent(); return; }
+        m_fresh = false;
         var buttons = ActionButtons();
         m_nav.SetItems(buttons, Label);
-        m_nav.AllowHorizontal = true;
+        m_nav.ForceFlatVertical();
         var header = m_overlay.productHeader != null ? ShopLabels.Product(m_overlay.productHeader) : LocalizationUtils.Get(LocalizationKey.SHOP_PRODUCT);
         AccessibilityMgr.Output(this, header, interrupt: true);
         if (Contents() is { Length: > 0 } contents) AccessibilityMgr.Output(this, contents, interrupt: false);
         if (buttons.Count > 0) m_nav.FocusFirst(announce: true, interruptPrior: false);
     }
 
-    // CONFIRM PURCHASE first (the primary action), then booster odds when present. The content slots are clickable
-    // (card preview) but deliberately not in the nav — their contents are spoken in the summary instead.
+    // CONFIRM PURCHASE first (the primary action), then booster odds when present, then the content slots with something
+    // to open: cards, boosters and decks (MainMenuController.OnClickProduct has nothing to show for the others).
     private List<Selectable> ActionButtons()
     {
         var result = new List<Selectable>();
         m_oddsButton = null;
+        m_slotButtons.Clear();
         var buy = m_overlay!.productHeader != null ? m_overlay.productHeader.purchaseButton : null;
+        m_buyButton = buy;
         if (buy != null && buy.isActiveAndEnabled) result.Add(buy);
         var odds = m_overlay.boosterButton;
         if (odds != null && odds.activeInHierarchy)
@@ -69,26 +77,49 @@ internal sealed class AccessibleShopProduct : AccessibleUI
             m_oddsButton = odds.GetComponent<Button>() ?? odds.GetComponentInChildren<Button>(includeInactive: false);
             if (m_oddsButton != null && m_oddsButton.isActiveAndEnabled) result.Add(m_oddsButton);
         }
+        foreach (var slot in Slots())
+        {
+            if (s_currentItem?.GetValue(slot) is not ItemData item) continue;
+            if (item.itemType is not (ItemData.ItemType.Card or ItemData.ItemType.Booster or ItemData.ItemType.BoosterParent or ItemData.ItemType.Deck)) continue;
+            var button = slot.GetComponentInChildren<Button>(includeInactive: false);
+            if (button == null || !button.isActiveAndEnabled) continue;
+            m_slotButtons[button] = slot;
+            result.Add(button);
+        }
         return result;
     }
 
-    private string Label(Selectable s) =>
-        m_oddsButton != null && s == m_oddsButton ? LocalizationUtils.Get(LocalizationKey.SHOPUI_BOOSTER_ODDS) : KeyboardNavigator.DefaultLabel(s);
+    // The buy button sits inside the product header, so the generic label would be the product's name; and when the player
+    // can't afford it the game turns it into a Close button: its own text says which.
+    private string Label(Selectable s)
+    {
+        if (m_oddsButton != null && s == m_oddsButton) return LocalizationUtils.Format(LocalizationKey.SHOPUI_OPENS_BROWSER, LocalizationUtils.Get(LocalizationKey.SHOPUI_BOOSTER_ODDS));
+        if (m_buyButton != null && s == m_buyButton && CollectionUi.Text(m_overlay?.purchaseButtonText) is { } buy) return buy;
+        if (m_slotButtons.TryGetValue(s, out var slot) && SlotName(slot) is { } name) return name;
+        return KeyboardNavigator.DefaultLabel(s);
+    }
+
+    // OnActivate destroys the previous product's slots with a deferred Destroy, so a scan of the holder still finds them
+    // this frame: the game's own list is the only one that is right.
+    private List<ProductItemSummarySlot> Slots() =>
+        GameReflect.ReadField<List<ProductItemSummarySlot>>(m_overlay, "spawnedProductItems") ?? new List<ProductItemSummarySlot>();
+
+    private static string? SlotName(ProductItemSummarySlot slot)
+    {
+        if (s_currentItem?.GetValue(slot) is not ItemData item || item.itemType == ItemData.ItemType.None) return null;
+        var n = s_numberOfItems?.GetValue(slot) is int i && i > 0 ? i : item.amount > 0 ? item.amount : 1;
+        var name = ItemName(item);
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        return n > 1 ? LocalizationUtils.Format(LocalizationKey.SHOPUI_TIMES, name, n) : name;
+    }
 
     // "Contains <item>, <item> …" read from the spawned ProductItemSummarySlots — cards by name, currencies by name,
     // everything else by its content loc / item type.
     private string Contents()
     {
-        if (m_overlay?.productItemHolder == null) return "";
         var parts = new List<string>();
-        foreach (var slot in m_overlay.productItemHolder.GetComponentsInChildren<ProductItemSummarySlot>(includeInactive: false))
-        {
-            if (s_currentItem?.GetValue(slot) is not ItemData item || item.itemType == ItemData.ItemType.None) continue;
-            var n = s_numberOfItems?.GetValue(slot) is int i && i > 0 ? i : item.amount > 0 ? item.amount : 1;
-            var name = ItemName(item);
-            if (string.IsNullOrWhiteSpace(name)) continue;
-            parts.Add(n > 1 ? LocalizationUtils.Format(LocalizationKey.SHOPUI_TIMES, name, n) : name);
-        }
+        foreach (var slot in Slots())
+            if (SlotName(slot) is { } name) parts.Add(name);
         return parts.Count > 0 ? LocalizationUtils.Format(LocalizationKey.SHOPUI_CONTAINS, string.Join(", ", parts)) : "";
     }
 
@@ -133,6 +164,7 @@ internal sealed class AccessibleShopProduct : AccessibleUI
     private void Open(ShopProductOverlay overlay)
     {
         m_overlay = overlay;
+        m_fresh = true;
         if (AccessibilityMgr.IsFocused(this)) OnGainedFocus();
         else AccessibilityMgr.ShowUI(this);
     }

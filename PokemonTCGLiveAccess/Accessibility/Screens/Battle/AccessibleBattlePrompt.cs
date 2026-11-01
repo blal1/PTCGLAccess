@@ -5,9 +5,13 @@ using System.Reflection;
 using CardDatabase.DataAccess;
 using HarmonyLib;
 using MatchLogic;
+using RainierClientSDK;
+using TPCI.Localization;
 using TPCI.Rainier.Match.Cards;
+using TPCI.Rainier.Match.Selection.Constraints;
 using TPCI.Rainier.Match.Cards.Ownership;
 using UnityEngine;
+using UnityEngine.UI;
 using static Accessibility.GameReflect;
 
 namespace Accessibility;
@@ -21,6 +25,7 @@ namespace Accessibility;
 // This UI goes over AccessibleBattleScreen (pausing board nav) and hides when the prompt closes. Handled
 // families: PRIZE, TEXT (coin/quiz/number/yes-no/mulligan), entity selections (hand/pile/attached/
 // board-attached), BOARD, DragActive, ReparentDamage and ACTION (choose an attack to use as this attack).
+// TEXT and ACTION draw in a modal drawer this UI owns: see OwnsModal.
 // Attach distribution is a board drag, routed to AccessibleBattleScreen. A family with no builder still
 // announces its question, but leaves the player with nothing to press — so any new one must be wired up here.
 internal sealed class AccessibleBattlePrompt : AccessibleUI
@@ -50,6 +55,9 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
         // For a COLLAPSED carousel/pile stack (e.g. 18 identical Basic Fire Energy shown as one pile):
         // the entityIDs in the pile, used for the live available/selected counts. Null = not a stack.
         public List<string>? StackEids;
+        // Shown in the carousel but not choosable (EntitySelection.allOptions minus allValidOptions): the
+        // player reads them the way a sighted player sees them greyed out.
+        public bool ReadOnly;
     }
 
     private ISelectionRequestHandler? m_handler;   // the open overlay (also a BattleMenu)
@@ -76,6 +84,7 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
     private Action? m_pendingChoose;
     private string m_pendingSelectParent = "";   // the energy's parent Pokémon we must "distribute" (open) to reach it
     private int m_pendingSelectTicks;
+    private bool m_boardAutoSubmit;   // the menu submits on the single click itself (see BuildBoardOptions)
     private PrizeCardSelectionMenu? m_prizeMenu;
     private int m_prizeMin;
     private int m_prizeMax;
@@ -222,12 +231,13 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
         // The game still opens the overlay with a "no valid cards" notice + a Done button; speak that
         // message and offer a Done that submits the empty selection (exactly what clicking Done does).
         // Without this the player heard "isn't supported yet" and had no way to dismiss the overlay.
-        if (m_options.Count == 0 && IsEmptyCardSelection(sel, handler))
+        if (IsEmptyCardSelection(sel, handler))
         {
             // The game's own "no valid cards" message. We use the plain key, not the "...press done" variant —
             // the Done is presented as a real navigable option, not spoken as a control hint.
             var msg = LocalizationUtils.GetGame("battle_select_no_valid_cards", LocalizationKey.BATTLE_PROMPT_NO_VALID_CARDS);
             m_question = string.IsNullOrWhiteSpace(m_question) ? msg : LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, m_question, msg);
+            m_options.RemoveAll(o => o.IsDone);
             m_options.Add(new Option { Name = LocalizationUtils.Get(LocalizationKey.BATTLE_DONE), IsDone = true, Choose = () => DismissEmptySelection(handler) });
         }
 
@@ -237,6 +247,7 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
             // choice is pending — the battle screen stays focused, but its actions are gated on the live
             // selection state (its m_localSelecting), so this can't soft-lock the match.
             // The diagnostics logged in BuildPrompt capture exactly what to wire up next.
+            if (m_active) Close();   // a replaced prompt must not leave this UI up on an empty list
             string q = string.IsNullOrWhiteSpace(m_question) ? LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_CHOICE_REQUIRED) : m_question;
             AccessibilityMgr.OutputNotification(LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_UNSUPPORTED, q));
             return;
@@ -267,6 +278,7 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
         m_bacsMenu = null;
         m_entityClickMenu = false;
         m_entityMax = 0;
+        m_boardAutoSubmit = false;
         m_pendingSelectEid = "";
         m_pendingSelectParent = "";
         m_pendingSelectTicks = 0;
@@ -300,7 +312,7 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
         }
 
         if (handler is PrizeCardSelectionMenu prize) BuildPrizeOptions(prize);
-        else if (handler is TextSelectionOverlay text) BuildTextOptions(text);
+        else if (handler is TextSelectionOverlay text) BuildTextOptions(text, sel);
         else if (handler is EntitySelectionOverlay entity && sel.variableSelection is EntitySelection esel) BuildEntityOptions(entity, esel);
         else if (handler is BoardSelectionMenu board && sel.variableSelection is EntitySelection besel) BuildBoardOptions(board, besel);
         else if (handler is ActivePromotionDragMenu drag && sel.variableSelection is EntitySelection dsel) BuildActiveDragOptions(drag, dsel);
@@ -309,6 +321,27 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
 
         LogPromptDiagnostics(sel, handler);
     }
+
+    // The Text and Action families draw their options in a modal drawer. This UI owns those decisions, so
+    // the generic modal UI must not also take focus and speak the same drawer (the double announcement, and
+    // the focus fight). The drawers are the prefab's, one per overlay, so they are asked for live. Every
+    // other modal in a match (confirmations, submission errors, the reveal grid) stays the modal UI's.
+    internal static bool OwnsModal(ModalElementContainer modal)
+    {
+        if (AccessibleBattleScreen.CurrentManager == null) return false;
+        var opener = MonoSingleton<SelectionOverlayOpener>.instance;
+        if (opener == null) return false;
+        var text = opener.GetBattleMenu(VariableSelectionSettings.SelectionMethod.Text) as TextSelectionOverlay;
+        if (text != null && ReferenceEquals(text.GetAssociatedModalBuilder()?.Drawer, modal)) return true;
+        return ReferenceEquals(ActionDrawer(opener.GetBattleMenu(VariableSelectionSettings.SelectionMethod.Action) as PlayerSelectionOverlay), modal);
+    }
+
+    private static ModalElementContainer? ActionDrawer(PlayerSelectionOverlay? overlay) =>
+        ReadField<ModalDrawerBuilder>(ReadField<PlayerSelectionOverlayCustomView>(overlay, "customViewProvider") as ActionSelectionOverlayCustomView_H, "overlayPopup")?.Drawer;
+
+    // MatchAnnouncements skips a message bar that only repeats what this prompt already said.
+    internal static bool IsCurrentQuestion(string text) =>
+        s_instance.m_active && s_instance.m_question.IndexOf(text, StringComparison.Ordinal) >= 0;
 
     // Record what every selection request looked like and whether we built options. Families we don't
     // drive yet build 0 options (the battle screen stays focused — gated so it can't soft-lock); this line
@@ -562,14 +595,78 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
             }
             foreach (var name in order)
                 m_options.Add(new Option { Name = name, Eid = stacks[name][0], StackEids = stacks[name], Choose = () => MarkStackOption(name) });
+            AddReadOnlyOptions(esel);
         }
         // Multi-pick ("choose any / up to N") needs an explicit Done so the player can stop short of the
         // max and submit the few they chose. Single-pick still auto-submits on the pick (no Done shown).
-        if (m_entityMax > 1) m_options.Add(new Option { Name = LocalizationUtils.Get(LocalizationKey.BATTLE_DONE), IsDone = true, Choose = SubmitEntity });
+        // An optional single pick ("you may choose 1") needs it too: without it there was no way to decline.
+        if (m_entityMax > 1 || entityMin == 0) m_options.Add(new Option { Name = LocalizationUtils.Get(LocalizationKey.BATTLE_DONE), IsDone = true, Choose = SubmitEntity });
         if (string.IsNullOrWhiteSpace(m_question))
             m_question = m_entityMax > 1
                 ? LocalizationUtils.Format(entityMin == m_entityMax ? LocalizationKey.BATTLE_PROMPT_CHOOSE_CARDS : LocalizationKey.BATTLE_PROMPT_CHOOSE_UP_TO_CARDS, m_entityMax)
                 : LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_CHOOSE_CARD);
+        AppendRange(entityMin, m_entityMax);
+        if ((esel.variableSelectionSettings as EntitySelectionSettings)?.exclusiveGroupings == true && esel.selectionGroups.Count > 1)
+            m_question = LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, m_question, LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_EXCLUSIVE_GROUPS));
+    }
+
+    // The bounds a sighted player reads off the drawer's "x / y" counter. Nothing to add for "exactly 1".
+    private void AppendRange(int min, int max)
+    {
+        string? range = null;
+        if (min == 0) range = LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_RANGE_OPTIONAL, max);
+        else if (min < max) range = LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_RANGE_BETWEEN, min, max);
+        else if (max > 1) range = LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_RANGE_EXACT, max);
+        if (range != null) m_question = LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, m_question, range);
+    }
+
+    // Cards the carousel shows greyed out: public ones collapsed by name, hidden ones as one count, so a deck
+    // search still tells the player what else is in the pile and how many cards stayed face down.
+    private void AddReadOnlyOptions(EntitySelection esel)
+    {
+        if (esel.allOptions == null) return;
+        var valid = new HashSet<string>(esel.AllValidOptionIDs);
+        var counts = new Dictionary<string, int>();
+        var firstEid = new Dictionary<string, string>();
+        int hidden = 0;
+        foreach (var addr in esel.allOptions)
+        {
+            if (valid.Contains(addr.entityID)) continue;
+            string name = addr.entityID.StartsWith("PRIVATE", StringComparison.Ordinal) ? "" : BattleBoardReader.EntityName(addr.entityID);
+            if (name.Length == 0) { hidden++; continue; }
+            counts[name] = counts.TryGetValue(name, out int n) ? n + 1 : 1;
+            if (!firstEid.ContainsKey(name)) firstEid[name] = addr.entityID;
+        }
+        Action refuse = () => Say(LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_NOT_SELECTABLE));
+        foreach (var kv in counts)
+        {
+            string body = kv.Value > 1 ? LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_PILE, kv.Key, kv.Value) : kv.Key;
+            m_options.Add(new Option { Name = LocalizationUtils.Format(LocalizationKey.COMMON_STATE_FORMAT, body, LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_NOT_SELECTABLE)), Eid = firstEid[kv.Key], ReadOnly = true, Choose = refuse });
+        }
+        if (hidden > 0)
+            m_options.Add(new Option { Name = LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_HIDDEN_CARDS, hidden), ReadOnly = true, Choose = refuse });
+    }
+
+    // Backspace on a pile or card: put back one chosen card, through the same click that chose it. The
+    // game's own click toggles a selected card back; the pile label's count shows what is left.
+    private void DeselectFocused()
+    {
+        if (m_mgr == null || m_idx < 0 || m_idx >= m_options.Count) return;
+        var option = m_options[m_idx];
+        var eid = option.StackEids?.LastOrDefault(IsSelectedEid) ?? (option.Eid != null && IsSelectedEid(option.Eid) ? option.Eid : null);
+        if (eid == null) { Say(LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_NOTHING_SELECTED)); return; }
+        var card = ResolveCardForRead(eid) ?? m_mgr.GetCard(eid);
+        if (card == null) { Say(LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_CHANGE_FAILED)); return; }
+        int prev = TotalSelected();
+        bool acted = false;
+        try
+        {
+            m_mgr.TargetingHandler.RefreshPlacementContext();
+            acted = m_mgr.TargetingHandler.TryTargetCard(ResolveTargetableCard(card), ClickReleaseAutoPlacementInitiator.ReusableInitiator);
+        }
+        catch (Exception ex) { Log.Error($"BattlePrompt: deselect threw: {ex.Message}"); }
+        Log.Info($"BattlePrompt deselect eid={eid} acted={acted} selected={TotalSelected()}");
+        AnnounceSelectionResult(prev, option.Name, acted);
     }
 
     // The attached-to Pokémon's name for a section header, or null if it can't be resolved to a real name.
@@ -933,6 +1030,13 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
     private void SubmitEntity()
     {
         if (m_entityOverlay == null) return;
+        // The game's SubmitClicked sets alreadySubmitted even when it then reports an error, which would
+        // lock the overlay, so an invalid count never reaches it.
+        if (m_entitySel != null && !m_entitySel.Validate())
+        {
+            Say(LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_CHOOSE_AT_LEAST, Math.Max(m_entitySel.totalMinAmount, 1), TotalSelected()));
+            return;
+        }
         try { m_entityOverlay.SubmitClicked(); }
         catch (Exception ex) { Log.Error($"BattlePrompt: SubmitClicked threw: {ex.Message}"); }
     }
@@ -991,6 +1095,7 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
     // CardInteractions.OverrideClickListener.
 
     private static readonly MethodInfo? s_boardSubmit = AccessTools.Method(typeof(BoardSelectionMenu), "SubmitSelection");
+    private static readonly FieldInfo? s_boardAutoSubmitField = AccessTools.Field(typeof(BoardSelectionMenu), "shouldAutoSubmitWhenSelectingSingleCard");
 
     private void BuildBoardOptions(BoardSelectionMenu board, EntitySelection esel)
     {
@@ -1008,11 +1113,38 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
             m_question = m_target > 1
                 ? LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_CHOOSE_POKEMONS, m_target)
                 : LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_CHOOSE_POKEMON);
+
+        // Same rule as BoardSelectionMenu's own auto-submit. Otherwise a sighted player gets a confirm button
+        // on the message bar, and may stop anywhere inside the range.
+        m_boardAutoSubmit = s_boardAutoSubmitField?.GetValue(board) is true && group.maxAmount == 1 && group.IsGroupFillRequirementSpecific();
+        if (!m_boardAutoSubmit)
+            m_options.Add(new Option { Name = LocalizationUtils.Get(LocalizationKey.BATTLE_DONE), IsDone = true, Choose = SubmitBoard });
+        AppendRange(group.minAmount < 0 ? m_target : group.minAmount, m_target);
+    }
+
+    private void SubmitBoard()
+    {
+        if (m_boardMenu == null || m_boardGroup == null) return;
+        if (!m_boardGroup.DoesSelectionCountFallWithinSubmitRange())
+        {
+            Say(LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_CHOOSE_AT_LEAST, Math.Max(m_boardGroup.minAmount, 1), m_boardGroup.selectedOptions.Count));
+            return;
+        }
+        m_submitted = true;
+        try { s_boardSubmit?.Invoke(m_boardMenu, null); }
+        catch (Exception ex) { Log.Error($"BattlePrompt board submit threw: {ex.Message}"); }
     }
 
     private void MarkBoard(string entityID)
     {
         if (m_boardMenu == null || m_boardGroup == null || m_mgr == null) return;
+        int before = m_boardGroup.selectedOptions.Count;
+        // At the maximum the menu turns an unselected card's click into Inspect: refuse instead of opening it.
+        if (!m_boardAutoSubmit && before >= m_target && !m_boardGroup.selectedOptions.Any(s => s.entityID == entityID))
+        {
+            Say(LocalizationUtils.Get(LocalizationKey.BATTLE_PROMPT_MAX_SELECTED));
+            return;
+        }
         var card = m_mgr.GetCard(entityID);   // the public board card — same instance BoardSelectionMenu holds
         var listener = card != null && card.Interactions != null ? card.Interactions.OverrideClickListener : null;
         if (card == null || listener == null)
@@ -1032,18 +1164,15 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
 
         if (!IsPromptOpen()) { m_submitted = true; return; }   // auto-submitted and closed
         int marked = m_boardGroup.selectedOptions.Count;
-        if (marked >= m_target)
-        {
-            m_submitted = true;
-            // A multi-card board pick that didn't auto-submit on the last click: the menu's own
-            // SubmitSelection (the method its message-bar confirm button calls). Private → reflected.
-            try { s_boardSubmit?.Invoke(m_boardMenu, null); }
-            catch (Exception ex) { Log.Error($"BattlePrompt board submit threw: {ex.Message}"); }
-        }
-        else
-        {
-            Say(LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_SELECTED_MORE, marked, m_target, m_target - marked));
-        }
+        string name = m_options.FirstOrDefault(o => o.Eid == entityID)?.Name ?? "";
+        if (marked < before) { Say(LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_DESELECTED_COUNT, name, marked)); return; }
+        if (marked < m_target) { Say(LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_SELECTED_MORE, marked, m_target, m_target - marked)); return; }
+        // Full: the count, then land on Done, so one more Enter finishes.
+        Say(LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_SELECTED_COUNT, name, marked, m_target));
+        int done = m_options.FindIndex(o => o.IsDone);
+        if (done < 0) return;
+        m_idx = done; m_line = -1; m_lines = null;
+        SpeakOption(done, interrupt: false);
     }
 
     #endregion
@@ -1076,6 +1205,9 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
         // EnergyFillDisplayMode.NONE (Seek Inspiration — the cost is already paid) no cost is shown.
         bool showCost = asel.energyFillDisplayMode != ActionSelection.EnergyFillDisplayMode.NONE;
         string origin = BattleBoardReader.EntityName(sel.originCardEntityID);   // the drawer's title, e.g. "Slowking"
+        // The widgets hold the live damage, once the drawer is up (it can open a little after this hook).
+        var widgets = (ActionDrawer(overlay)?.CurrentOptions.OfType<AttackOption>() ?? Enumerable.Empty<AttackOption>()).ToList();
+        int shown = 0;
 
         for (int i = 0; i < asel.options.Count; i++)
         {
@@ -1089,9 +1221,14 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
             // The Pokémon the attack belongs to (the discarded card / the Defending Pokémon) — spoken
             // once as a section name, since it isn't the card named in the header.
             string parent = ResolveParentName(opt.parentEntityID) ?? "";
+            // Which card pays the cost, as the drawer's GetCardForOption decides.
+            var payer = asel.energyFillDisplayMode == ActionSelection.EnergyFillDisplayMode.ShowPlayerEnergyFill ? sel.originCardEntityID : opt.parentEntityID;
+            string? liveCost = showCost ? CardInfo.Get(payer)?.GetAttackEnergyCost(action) : null;
+            string? liveDamage = shown < widgets.Count ? PopupUtils.Text(ReadField<LocText>(widgets[shown], "damageAmountDisplay")) : null;
+            shown++;
             m_options.Add(new Option
             {
-                Name = ActionOptionLabel(row, action, showCost),
+                Name = ActionOptionLabel(row, action, showCost, liveCost, liveDamage),
                 Parent = (parent.Length > 0 && parent != origin) ? parent : null,
                 Eid = opt.parentEntityID,   // Up/Down reads that Pokémon's card
                 Choose = () => { m_submitted = true; overlay.SelectOption(index); },
@@ -1107,7 +1244,7 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
     // for this match carries override loc ids on its CardAction, which win over the printed text (exactly
     // as AttackOption.SetupCustom resolves them). SpeakIcons runs first because energy symbols live in
     // this text as {W}-style tokens, which a later strip would silently delete.
-    private static string ActionOptionLabel(CardActionDataRow row, CardAction action, bool showCost)
+    private static string ActionOptionLabel(CardActionDataRow row, CardAction action, bool showCost, string? liveCost, string? liveDamage)
     {
         string name = !string.IsNullOrEmpty(action.overrideNameLocID)
             ? LocalizationUtils.TryGetGame(action.overrideNameLocID) ?? row.Name
@@ -1121,10 +1258,12 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
         var head = new List<string> { CardText.SpeakIcons(name).Trim() };
         if (showCost)
         {
-            string cost = BattleBoardReader.EnergyCostWords(row.Cost);
+            // The cost and damage this match, when an effect changed them; else the printed values.
+            string cost = BattleBoardReader.EnergyCostWords(string.IsNullOrEmpty(liveCost) ? row.Cost : liveCost);
             if (cost.Length > 0) head.Add(cost);
         }
-        if (!string.IsNullOrEmpty(row.Damage)) head.Add(LocalizationUtils.Format(LocalizationKey.CARD_DAMAGE, row.Damage));
+        string damage = string.IsNullOrWhiteSpace(liveDamage) ? row.Damage : liveDamage!.Trim();
+        if (!string.IsNullOrEmpty(damage)) head.Add(LocalizationUtils.Format(LocalizationKey.CARD_DAMAGE, damage));
 
         string label = string.Join(", ", head);
         text = CardText.SpeakIcons(text).Trim().TrimEnd('.');
@@ -1637,17 +1776,81 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
 
     #region Text (coin / quiz / number / yes-no / mulligan)
 
-    private void BuildTextOptions(TextSelectionOverlay text)
+    // Options keep their raw index (the one SelectOption wants); REMOVED_OPTION has no widget, exactly as in
+    // DefaultTextModalDrawerSetupDataFactory. Choosing presses the drawer's own widget where one exists, so a
+    // tutorial that greys out the other buttons (FTUESelectionIndicator) is respected. The widgets are looked
+    // up at press time because the drawer can open a little after this hook.
+    private void BuildTextOptions(TextSelectionOverlay text, PlayerSelection sel)
     {
         var ids = text.GetOptions();
         if (ids == null) return;
+        var ts = sel.variableSelection as TextSelection;
+        var kind = ts?.selectionType ?? TextSelection.SelectionType.Default;
+        bool number = sel.variableSelection?.selectionMethod == VariableSelectionSettings.SelectionMethod.Number;
+        int shown = 0;
         for (int i = 0; i < ids.Count; i++)
         {
             string id = ids[i];
             if (string.IsNullOrEmpty(id) || id == "REMOVED_OPTION") continue;
-            int idx = i;
-            string label = LocalizationUtils.TryGetGame(id) ?? id;
-            m_options.Add(new Option { Name = label, Choose = () => { m_submitted = true; text.SelectOption(idx); } });
+            int idx = i, position = shown++;
+            string label = number ? id
+                : kind == TextSelection.SelectionType.EnergySelection ? BattleBoardReader.TypeWord(id)
+                : kind == TextSelection.SelectionType.RockPaperScissors ? MatchAnnouncements.RpsName(id)
+                : LocalizationUtils.TryGetGame(id) ?? id;
+            m_options.Add(new Option { Name = label, Choose = () => ChooseTextOption(text, kind, number, idx, position) });
+        }
+        // The number wheel opens on its highest value, so the list starts where a sighted player starts.
+        if (number && m_options.Count > 0) m_idx = m_options.Count - 1;
+
+        if (ts is CoinFlipContextualTextSelection flip) AddReflipContext(flip, sel);
+        // The drawer's title names the card asking; the wheel draws none.
+        string origin = number ? "" : BattleBoardReader.EntityName(sel.originCardEntityID);
+        if (origin.Length > 0) m_question = string.IsNullOrWhiteSpace(m_question) ? origin : LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, origin, m_question);
+    }
+
+    private void ChooseTextOption(TextSelectionOverlay text, TextSelection.SelectionType kind, bool number, int idx, int position)
+    {
+        var drawer = text.GetAssociatedModalBuilder()?.Drawer;
+        if (!number && kind == TextSelection.SelectionType.RockPaperScissors && drawer?.GetFirstDrawerOptionOfType<SelectRPSModalOption>() is { } rps)
+        {
+            // Not SelectOption alone: this also shows the game's "waiting for the opponent" result panel.
+            m_submitted = true;
+            rps.OptionSelected(idx);
+            return;
+        }
+        Button? button = null;
+        if (!number && drawer != null)
+        {
+            if (kind == TextSelection.SelectionType.EnergySelection)
+            {
+                var buttons = drawer.GetFirstDrawerOptionOfType<EnergyTextSelectModalOption>()?.energyOptionButtons;
+                if (buttons != null && idx < buttons.Count) button = buttons[idx];
+            }
+            else
+            {
+                var widgets = drawer.CurrentOptions.OfType<SimpleButtonModalOption>().ToList();
+                if (position < widgets.Count) button = ReadField<Button>(widgets[position], "SettingButton");
+            }
+        }
+        if (button != null && !button.interactable) { Say(LocalizationUtils.Get(LocalizationKey.BATTLE_NOT_USABLE_NOW)); return; }
+        m_submitted = true;
+        if (button != null) button.onClick.Invoke();
+        else text.SelectOption(idx);
+    }
+
+    // The reflip question ("flip again?") means nothing without the attack and the flips so far, both of
+    // which the game shows in the drawer's custom header.
+    private void AddReflipContext(CoinFlipContextualTextSelection flip, PlayerSelection sel)
+    {
+        var guid = !string.IsNullOrEmpty(flip.CopiedActionGuid) ? flip.CopiedActionGuid : sel.originActionRefID;
+        var action = NetworkMatchController.currentMatchInfo?.GetAction(guid) as CardAction;
+        var row = action != null && int.TryParse(action.actionSourceID, out int actionId) ? ManagerSingleton<CardDatabaseManager>.instance?.TryGetActionFromDatabase(actionId) : null;
+        if (action != null && row != null)
+            m_question = LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, ActionOptionLabel(row, action, false, null, null), m_question);
+        if (flip.FlipState != null)
+        {
+            int heads = flip.FlipState.HeadsCount;
+            m_question = LocalizationUtils.Format(LocalizationKey.BATTLE_SENTENCES, m_question, LocalizationUtils.Format(LocalizationKey.BATTLE_PROMPT_REFLIP_RESULT, heads, flip.FlipState.TotalAttempts - heads));
         }
     }
 
@@ -1686,6 +1889,11 @@ internal sealed class AccessibleBattlePrompt : AccessibleUI
             if (forced != null && m_damageEval != null && m_damageEval.GetCardsWithDistributableDamage(null).Contains(forced))
             { ChooseDamageSource(forced); return; }
         }
+
+        // Look at the board without leaving the decision: everything a sighted player can still see around it.
+        if (BattleBoardReader.PressedZone() is { } zone) { AccessibleBoardReview.Open(zone, IsPromptOpen); return; }
+        if (MatchAnnouncements.TryHandleInfoKey()) return;
+        if (AccessibleKey.BACK.IsPressed() && m_entitySel != null) { DeselectFocused(); return; }
 
         // Tab jumps to the Done option (multi-pick confirm) for quick access — no-op if there isn't one.
         if (AccessibleKey.NEXT_SECTION.IsPressed()) { JumpToDone(); return; }

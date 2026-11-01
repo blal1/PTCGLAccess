@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using SharedSDKUtils;
+using TMPro;
 using TPCI.Rainier.Features.DeckManager;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,11 +21,11 @@ namespace Accessibility;
 //              — navigated by data over deckList.ActiveDeckEntries.
 //   • Detail — the selected deck's panel (DeckPanel_L): EDIT DECK / SET ACTIVE / TEST / DUPLICATE / EXPORT / DELETE /
 //              rename / favorite. EDIT DECK opens the editor (AccessibleEditDeck).
-//
-// Not covered yet (as in the previous mod): the format toggle (STANDARD/Expanded), SHOW VALID ONLY, the search box.
+//   • Filters — the format toggle, SHOW VALID ONLY and the search box. Each of them, and the grouping tabs, re-lists the
+//              decks, so the list is compared with the game's every frame.
 internal sealed class AccessibleDeckSelect : AccessibleScreen
 {
-    private enum Section { Top, Tabs, Decks, Detail }
+    private enum Section { Top, Tabs, Filters, Decks, Detail }
 
     private static readonly AccessibleDeckSelect s_instance = new();
 
@@ -33,7 +34,12 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
     private readonly KeyboardNavigator m_topNav;
     private readonly KeyboardNavigator m_tabsNav;
     private readonly KeyboardNavigator m_detailNav;
+    private readonly KeyboardNavigator m_filterNav;
     private HUBDeckSelectController? m_controller;
+    private ExpandableSearchBar? m_search;
+    private TMP_InputField? m_searchField;
+    private bool m_searchOpened;
+    private string m_entriesSig = "";
     private bool m_fresh;
 
     private Section m_section = Section.Decks;
@@ -55,11 +61,21 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
         m_topNav = new KeyboardNavigator(this) { AllowTab = false };
         m_tabsNav = new KeyboardNavigator(this) { AllowTab = false, RadioToggleMode = true };
         m_detailNav = new KeyboardNavigator(this) { AllowTab = false };
+        m_filterNav = new KeyboardNavigator(this) { AllowTab = false };
     }
 
     public void HandleInput()
     {
         if (m_controller == null) return;
+        SyncEntries();
+
+        // In the search field Escape must leave the field, not open the menu; Enter goes to the results.
+        if (m_section == Section.Filters && m_filterNav.CurrentIsTextField)
+        {
+            if (!m_searchOpened) { m_searchOpened = true; m_search?.OpenSearch(); }
+            if (AccessibleKey.ESCAPE.IsPressed() || AccessibleKey.CONFIRM.IsPressed()) { EnterSection(Section.Decks, interruptPrior: true); return; }
+        }
+        else if (AccessibleKey.READ_DECK_VALIDITY.IsPressed() && !KeyboardNavigator.IsTextInputFocused()) { ReadPanel(); return; }
 
         // Escape: in challenge-deck-selection it returns to the battle request (the game's own LeaveDeckManager →
         // returnToFriendJoinMatchButton); otherwise it opens the ⋮ menu (the deck list has no other "back" — the editor
@@ -77,6 +93,10 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
         {
             case Section.Top: HandleStrip(m_topNav, null, Section.Tabs); break;
             case Section.Tabs: HandleStrip(m_tabsNav, Section.Top, Section.Decks); break;
+            case Section.Filters:
+                if (AccessibleKey.CONFIRM.IsPressed() && m_filterNav.Current is Toggle) { m_filterNav.Activate(isSpaceKey: true); break; }
+                m_filterNav.HandleInput();
+                break;
             // The deck-options panel is a flat vertical list of deck actions: arrows STAY within it (no edge-escape —
             // it's a self-contained menu).
             case Section.Detail: m_detailNav.HandleInput(); break;
@@ -102,6 +122,7 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
         {
             case Section.Top: m_topNav.RefocusCurrent(); break;
             case Section.Tabs: m_tabsNav.RefocusCurrent(); break;
+            case Section.Filters: m_filterNav.RefocusCurrent(); break;
             case Section.Detail: m_detailNav.RefocusCurrent(); break;
             case Section.Decks: AnnounceDeck(interrupt: true); break;
         }
@@ -131,6 +152,7 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
         m_tabsNav.ForceFlatHorizontal();
         m_tabsNav.GroupName = LocalizationUtils.Get(LocalizationKey.COLLECTION_DECK_GROUPING);
 
+        RebuildFilters();
         RebuildDetail();
 
         // CREATE A DECK — read the game's own create-deck prefab button (DeckSelectList.createDeckPrefab →
@@ -151,6 +173,60 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
         m_entries.Clear();
         if (deckList != null) m_entries.AddRange(deckList.ActiveDeckEntries.Where(e => e != null));
         if (m_deckIndex >= m_entries.Count) m_deckIndex = m_entries.Count - 1;
+        m_entriesSig = EntriesSig();
+    }
+
+    // Format button, valid-only toggle, then the search field last: inside a text field the arrows move the caret, so
+    // anything after it would be stranded.
+    private void RebuildFilters()
+    {
+        var items = new List<Selectable>();
+        var format = ReadField<ChangeGameModeButton>(m_controller, "headerChangeGameModeButton");
+        var formatButton = format != null ? format.GetComponentInChildren<Button>(includeInactive: false) ?? format.GetComponentInParent<Button>() : null;
+        if (formatButton != null && formatButton.isActiveAndEnabled) items.Add(formatButton);
+        var validOnly = ReadField<SilencableToggle>(m_controller, "validOnlyToggle");
+        if (validOnly != null && validOnly.MyToggle != null && validOnly.MyToggle.isActiveAndEnabled) items.Add(validOnly.MyToggle);
+        m_search = ReadField<ExpandableSearchBar>(m_controller, "deckSearchBar");
+        m_searchField = CollectionUi.SearchField(m_search);
+        if (m_searchField != null && m_searchField.isActiveAndEnabled) items.Add(m_searchField);
+        SetItemsKeepingIndex(m_filterNav, items, s => KeyboardNavigator.DefaultLabel(s));
+        m_filterNav.ForceFlatVertical();
+        m_filterNav.GroupName = LocalizationUtils.Get(LocalizationKey.COLLECTION_FILTER);
+    }
+
+    private string EntriesSig()
+    {
+        var list = m_controller?.GetDeckList();
+        return list == null ? "" : string.Join(",", list.ActiveDeckEntries.Where(e => e != null).Select(e => e.GetInstanceID()));
+    }
+
+    // Grouping, format, valid-only and search all re-list the decks asynchronously: follow, keep the cursor on the same
+    // deck when it survived, and say how many are left.
+    private void SyncEntries()
+    {
+        var sig = EntriesSig();
+        if (sig == m_entriesSig) return;
+        var current = m_deckIndex >= 0 && m_deckIndex < m_entries.Count ? m_entries[m_deckIndex] : null;
+        m_entries.Clear();
+        m_entries.AddRange(m_controller!.GetDeckList().ActiveDeckEntries.Where(e => e != null));
+        m_entriesSig = sig;
+        var kept = current != null ? m_entries.IndexOf(current) : -1;
+        m_deckIndex = kept >= 0 ? kept : m_entries.Count > 0 ? 0 : -1;
+        AccessibilityMgr.Output(this, LocalizationUtils.Format(LocalizationKey.COLLECTION_DECK_COUNT, m_entries.Count), interrupt: false);
+    }
+
+    // V: the selected deck as the panel shows it: name, format, card count, validity and the rule rows.
+    private void ReadPanel()
+    {
+        var panel = m_controller!.GetDeckPanel();
+        if (panel == null) return;
+        var parts = new List<string>();
+        if (CollectionUi.Text(ReadField<TextMeshProUGUI>(panel, "deckTitleText")) is { } title) parts.Add(title);
+        if (CollectionUi.Text(ReadField<TPCI.Localization.LocText>(panel, "formatText")) is { } format) parts.Add(format);
+        if (CollectionUi.Text(ReadField<TPCI.Localization.LocText>(panel, "deckCountText")) is { } count) parts.Add(count);
+        if (CollectionUi.Text(ReadField<TPCI.Localization.LocText>(panel, "validityLocText")) is { } validity) parts.Add(validity);
+        parts.AddRange(CollectionUi.ValidityRows(panel));
+        AccessibilityMgr.Output(this, string.Join(". ", parts), interrupt: true);
     }
 
     private static void SetItemsKeepingIndex(KeyboardNavigator nav, List<Selectable> items, KeyboardNavigator.LabelResolver resolver)
@@ -203,6 +279,7 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
     {
         Section.Top => m_topNav.Count > 0,
         Section.Tabs => m_tabsNav.Count > 0,
+        Section.Filters => m_filterNav.Count > 0,
         Section.Decks => true,   // always has at least "Create a deck"
         Section.Detail => m_detailNav.Count > 0,
         _ => false,
@@ -210,7 +287,7 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
 
     private void CycleSection(int dir)
     {
-        var order = new[] { Section.Top, Section.Tabs, Section.Decks, Section.Detail };
+        var order = new[] { Section.Top, Section.Tabs, Section.Filters, Section.Decks, Section.Detail };
         var cur = Math.Max(0, Array.IndexOf(order, m_section));
         for (var step = 1; step <= order.Length; step++)
         {
@@ -222,6 +299,8 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
 
     private void EnterSection(Section s, bool interruptPrior)
     {
+        CollectionUi.ReleaseTextField(m_searchField);
+        m_searchOpened = false;
         // Re-scan the detail panel against the live deck selection before entering it, so SET ACTIVE appears for a
         // non-active valid deck (it's hidden for the active deck, the default selection).
         if (s == Section.Detail) RebuildDetail();
@@ -231,6 +310,7 @@ internal sealed class AccessibleDeckSelect : AccessibleScreen
         {
             case Section.Top: m_topNav.FocusFirst(announce: true, interruptPrior); break;
             case Section.Tabs: m_tabsNav.FocusFirst(announce: true, interruptPrior); break;
+            case Section.Filters: RebuildFilters(); m_filterNav.FocusFirst(announce: true, interruptPrior); break;
             case Section.Detail: m_detailNav.FocusFirst(announce: true, interruptPrior); break;
             case Section.Decks:
                 var index = m_deckIndex < -1 || m_deckIndex >= m_entries.Count ? (m_entries.Count > 0 ? 0 : -1) : m_deckIndex;

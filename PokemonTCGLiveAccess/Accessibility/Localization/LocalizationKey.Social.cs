@@ -83,4 +83,21 @@ public sealed partial class LocalizationKey
     public static readonly LocalizationKey SETTINGS_OFF = new(nameof(SETTINGS_OFF));
     public static readonly LocalizationKey SETTINGS_CURRENT = new(nameof(SETTINGS_CURRENT));
     public static readonly LocalizationKey SETTINGS_NOT_SELECTED = new(nameof(SETTINGS_NOT_SELECTED));
+    public static readonly LocalizationKey SOCIAL_INBOX = new(nameof(SOCIAL_INBOX));
+    public static readonly LocalizationKey SOCIAL_INBOX_HELP = new(nameof(SOCIAL_INBOX_HELP));
+    public static readonly LocalizationKey SOCIAL_INBOX_COUNT_FORMAT = new(nameof(SOCIAL_INBOX_COUNT_FORMAT));
+    public static readonly LocalizationKey SOCIAL_INBOX_EMPTY = new(nameof(SOCIAL_INBOX_EMPTY));
+    public static readonly LocalizationKey SOCIAL_INBOX_UNREAD = new(nameof(SOCIAL_INBOX_UNREAD));
+    public static readonly LocalizationKey SOCIAL_INBOX_DETAILS = new(nameof(SOCIAL_INBOX_DETAILS));
+    public static readonly LocalizationKey SOCIAL_INBOX_REMOVE = new(nameof(SOCIAL_INBOX_REMOVE));
+    public static readonly LocalizationKey SOCIAL_INBOX_CLEAR_ALL = new(nameof(SOCIAL_INBOX_CLEAR_ALL));
+    public static readonly LocalizationKey SOCIAL_INBOX_NEW_FORMAT = new(nameof(SOCIAL_INBOX_NEW_FORMAT));
+    public static readonly LocalizationKey SOCIAL_STATS = new(nameof(SOCIAL_STATS));
+    public static readonly LocalizationKey SOCIAL_STATS_HELP = new(nameof(SOCIAL_STATS_HELP));
+    public static readonly LocalizationKey SOCIAL_STATS_EMPTY = new(nameof(SOCIAL_STATS_EMPTY));
+    public static readonly LocalizationKey SOCIAL_REQUEST_SENT_FORMAT = new(nameof(SOCIAL_REQUEST_SENT_FORMAT));
+    public static readonly LocalizationKey SOCIAL_REQUEST_RECEIVED_FORMAT = new(nameof(SOCIAL_REQUEST_RECEIVED_FORMAT));
+    public static readonly LocalizationKey SOCIAL_REQUEST_ACCEPTED_FORMAT = new(nameof(SOCIAL_REQUEST_ACCEPTED_FORMAT));
+    public static readonly LocalizationKey SOCIAL_FRIEND_CAME_ONLINE_FORMAT = new(nameof(SOCIAL_FRIEND_CAME_ONLINE_FORMAT));
+    public static readonly LocalizationKey SOCIAL_INVITE_CANCELLED = new(nameof(SOCIAL_INVITE_CANCELLED));
 }

@@ -79,3 +79,20 @@ SETTINGS_ON	activé	fallback state of a setting
 SETTINGS_OFF	désactivé	fallback state of a setting
 SETTINGS_CURRENT	actuelle	the language in use
 SETTINGS_NOT_SELECTED	non sélectionné	a settings tab
+SOCIAL_INBOX	Boîte de réception	fallback title of the inbox
+SOCIAL_INBOX_HELP	Flèches haut et bas : parcourir les messages. Flèches gauche et droite : choisir une action pour le message. Entrée : l'exécuter. Maj+Haut : relire le message. Échap : quitter.	F1 in the inbox
+SOCIAL_INBOX_COUNT_FORMAT	{0}, {1} messages, {2} non lus	inbox title: 0=name 1=messages 2=unread
+SOCIAL_INBOX_EMPTY	Aucun message.	fallback when the inbox is empty
+SOCIAL_INBOX_UNREAD	non lu	state of an inbox message
+SOCIAL_INBOX_DETAILS	Lire en entier	inbox action opening the whole message
+SOCIAL_INBOX_REMOVE	Supprimer	inbox action, fallback
+SOCIAL_INBOX_CLEAR_ALL	Tout supprimer	inbox button, fallback
+SOCIAL_INBOX_NEW_FORMAT	Nouveau dans votre boîte de réception : {0} non lus	0=unread messages
+SOCIAL_STATS	Statistiques	title of the stats page
+SOCIAL_STATS_HELP	Flèches haut et bas : lire les statistiques ligne par ligne. Flèches gauche et droite : parcourir les commandes de la page. Entrée : activer. Échap : retour au profil.	F1 on the stats page
+SOCIAL_STATS_EMPTY	Aucune statistique affichée.	the stats page has no text
+SOCIAL_REQUEST_SENT_FORMAT	{0}, demande d'ami envoyée	friends panel: outgoing request
+SOCIAL_REQUEST_RECEIVED_FORMAT	Demande d'ami de {0}	notification
+SOCIAL_REQUEST_ACCEPTED_FORMAT	{0} a accepté votre demande d'ami	notification
+SOCIAL_FRIEND_CAME_ONLINE_FORMAT	{0} est maintenant en ligne	notification
+SOCIAL_INVITE_CANCELLED	Un défi de combat a été annulé.	notification

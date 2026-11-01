@@ -23,7 +23,7 @@
   <!-- Game and engine assemblies, compiled against but never copied. -->
   <ItemGroup>
     <GameAssembly Include="UnityEngine;UnityEngine.CoreModule;UnityEngine.UI;UnityEngine.UIModule;UnityEngine.InputLegacyModule;Unity.InputSystem;UnityEngine.InputModule;UnityEngine.IMGUIModule;UnityEngine.TextRenderingModule;UnityEngine.AnimationModule;Unity.TextMeshPro" />
-    <GameAssembly Include="Assembly-CSharp;Assembly-CSharp-firstpass;MatchLogic;CardDatabase.DataAccess;RainierClientSDK;TPCI.RainierClient;TPCI.Shared.Singletons;TPCILocalization;TPCILocalizationAPI;TPCI.Localization.Api;TPCI.Localization.Impl;TPCIEventDispatch;TPCIEventDispatchAPI;TPCIAnywhereCoroutine;SharedLogicUtils;RainierItems;ClientNetworking;EnhancedScrollerV2" />
+    <GameAssembly Include="Assembly-CSharp;Assembly-CSharp-firstpass;MatchLogic;CardDatabase.DataAccess;RainierClientSDK;TPCI.RainierClient;TPCI.Shared.Singletons;TPCILocalization;TPCILocalizationAPI;TPCI.Localization.Api;TPCI.Localization.Impl;TPCIEventDispatch;TPCIEventDispatchAPI;TPCIAnywhereCoroutine;SharedLogicUtils;RainierItems;ClientNetworking;EnhancedScrollerV2;CardDexSharedTypes;BuildAndBattleFeature" />
     <Reference Include="@(GameAssembly)" HintPath="$(GameManagedDir)\%(Identity).dll" Private="false" />
   </ItemGroup>
 

@@ -583,27 +583,8 @@ internal sealed class AccessibleSettings : AccessibleUI
     // row. Every known description and value label is excluded, so a stray match can't be another
     // row's text. This is the game's own text; nothing is invented, and an empty result just means
     // the row reads as it did before.
-    private string RowName(LocText? description)
-    {
-        if (description == null) return "";
-        try
-        {
-            var known = new HashSet<LocText>(new[] { m_foilDescription, m_foilValueLabel, m_frontEndDescription, m_frontEndValueLabel, m_battleDescription, m_battleValueLabel }
-                .Where(t => t != null).Select(t => t!));
-            var scope = description.transform.parent;
-            for (int level = 0; level < 2 && scope != null; level++, scope = scope.parent)
-            {
-                foreach (var candidate in scope.GetComponentsInChildren<LocText>(includeInactive: false))
-                {
-                    if (candidate == null || known.Contains(candidate)) continue;
-                    var text = SocialUi.TextOf(candidate);
-                    if (!string.IsNullOrWhiteSpace(text)) return text;
-                }
-            }
-        }
-        catch { }
-        return "";
-    }
+    private string RowName(LocText? description) =>
+        SocialUi.RowName(description, new[] { m_foilDescription, m_foilValueLabel, m_frontEndDescription, m_frontEndValueLabel, m_battleDescription, m_battleValueLabel });
 
     private string FrontEndVfxLabel()
     {

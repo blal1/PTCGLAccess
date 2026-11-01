@@ -279,6 +279,7 @@ internal sealed class AccessibleMatchResult : AccessibleScreen
                 if (hadNone && m_statsNav.Count > 0) FocusStatsDefault(interruptPrior: true);
                 return;
             }
+            if (AccessibleKey.BATTLE_LOG.IsPressed()) { AccessibleBattleLogHistory.Open(ReadField<IBattleLogStateProvider>(m_overlay, "_battleLog")); return; }
             m_statsNav.HandleInput();
             return;
         }

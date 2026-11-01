@@ -37,7 +37,7 @@ COLLECTION_NO_VERSIONS	Aucune autre version	card detail
 COLLECTION_VERSION_N	Version {0}	0=index
 COLLECTION_OWNED_IN_DECK	{0} possédées, {1} dans le deck	0=owned 1=in deck
 COLLECTION_CARD_DEX_DETAIL_HELP	Flèches haut et bas : parcourir les sections carte, échange et détails ; dans les détails, lire ligne par ligne. Flèches gauche et droite sur la carte : carte précédente ou suivante. Entrée : activer. Échap : fermer.	F1 in the Card Dex card detail
-COLLECTION_DECKS_HELP	Tab et Maj+Tab : passer de la barre du haut aux onglets, à la liste des decks et au panneau du deck choisi. Flèches : se déplacer dans une section. Entrée : ouvrir ou activer. Échap : retour.	F1 on the Decks screen
+COLLECTION_DECKS_HELP	Tab et Maj+Tab : passer de la barre du haut aux onglets, aux filtres (format, valides uniquement, recherche), à la liste des decks et au panneau du deck choisi. Flèches : se déplacer dans une section. Entrée : ouvrir ou activer. V : lire le deck choisi et les règles non respectées. Échap : retour ; dans la recherche, Entrée ou Échap va à la liste des decks.	F1 on the Decks screen
 COLLECTION_DECKS	Decks	screen name fallback
 COLLECTION_DECK_GROUPING	Groupes de decks	tab group name
 COLLECTION_CREATE_DECK	Créer un deck	fallback for the create-deck tile
@@ -47,7 +47,7 @@ COLLECTION_ACTIVE_FOR	actif pour {0}	0=game modes
 COLLECTION_ACTIVE	actif	deck state
 COLLECTION_RETURN_TO_CHALLENGE	Retourner au défi	friend challenge return button
 COLLECTION_SET_ACTIVE	Définir comme deck actif	button fallback
-COLLECTION_EDIT_DECK_HELP	Tab et Maj+Tab : passer de la barre du haut aux catégories, au deck et à la bibliothèque de cartes. Flèches gauche et droite : changer de carte ; haut et bas : lire la carte ligne par ligne. Entrée : prendre une carte ; Tab vers l'autre liste puis Entrée pour la poser : de la bibliothèque au deck l'ajoute, du deck à la bibliothèque la retire. I : détails de la carte. Échap : annuler la carte prise ou quitter l'éditeur.	F1 in the deck editor
+COLLECTION_EDIT_DECK_HELP	Tab et Maj+Tab : passer de la barre du haut aux catégories, au deck et à la bibliothèque de cartes. Flèches gauche et droite : changer de carte ; haut et bas : lire la carte ligne par ligne. Entrée : prendre une carte ; Tab vers l'autre liste puis Entrée pour la poser : de la bibliothèque au deck l'ajoute, du deck à la bibliothèque la retire. I : détails de la carte. V : lire pourquoi le deck est valide ou non. La recherche est le dernier élément de la barre du haut ; Entrée ou Échap y mène à la bibliothèque. Échap : annuler la carte prise ou quitter l'éditeur. Changer de catégorie efface la recherche.	F1 in the deck editor
 COLLECTION_CATEGORY	Catégorie	deck editor tabs group
 COLLECTION_EXCHANGE_ALL_UNOWNED	Échanger toutes les cartes non possédées	fallback label
 COLLECTION_EMPTY	{0}, vide	0=section name
@@ -90,3 +90,14 @@ COLLECTION_SET_VIEW	Affichage de l'extension	master/main set toggle fallback
 COLLECTION_SETS	Extensions	Card Dex set carousel
 COLLECTION_NEW_CARDS	nouvelles cartes	set has new cards
 COLLECTION_CARD_COLLECTION	Collection de cartes	Card Dex grid
+COLLECTION_DECK_VIEW_HELP	Tab et Maj+Tab : passer des cartes aux catégories et aux boutons. Flèches gauche et droite : changer de carte ; haut et bas : la lire ligne par ligne. Entrée : ouvrir la carte en grand. Échap : fermer.	F1 on the full deck view
+COLLECTION_DECK_VIEW	Contenu du deck	full deck view without a header
+COLLECTION_CUSTOMIZE_HELP	Tab et Maj+Tab : changer de catégorie, boîte de deck, protège-cartes ou pièce. Flèches gauche et droite : changer d'objet ; un objet possédé est équipé aussitôt. Haut et bas : parcourir les autres commandes, Entrée pour les activer. Échap : retour.	F1 on deck customization
+COLLECTION_CUSTOMIZE	Personnaliser le deck	screen name
+COLLECTION_CUSTOM_EQUIPPED	{0}, possédé, équipé	0=item name
+COLLECTION_CUSTOM_BUYABLE	{0}, non possédé, {1}	0=item name 1=price and currency
+COLLECTION_BUY	Acheter	customization buy button
+COLLECTION_SET_COMPLETE_HELP	Entrée ou Échap ferme ce message une fois l'animation terminée.	F1 on set complete
+COLLECTION_NO_RESULTS	Aucune carte trouvée	library search or filter empty
+COLLECTION_DECK_COUNT	Decks affichés : {0}	0=count
+COLLECTION_CRAFT_ALL_HELP	Flèches haut et bas : parcourir les boutons. Gauche et droite : lire les cartes à échanger ; I : ouvrir la carte. Entrée : activer. Échap : fermer.	F1 on exchange all

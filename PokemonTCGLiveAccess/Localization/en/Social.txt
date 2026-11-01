@@ -79,3 +79,20 @@ SETTINGS_ON	on	fallback state of a setting
 SETTINGS_OFF	off	fallback state of a setting
 SETTINGS_CURRENT	current	the language in use
 SETTINGS_NOT_SELECTED	not selected	a settings tab
+SOCIAL_INBOX	Inbox	fallback title of the inbox
+SOCIAL_INBOX_HELP	Up and down arrows: move through the messages. Left and right arrows: choose an action for the message. Enter: do it. Shift+Up: read the message again. Escape: leave.	F1 in the inbox
+SOCIAL_INBOX_COUNT_FORMAT	{0}, {1} messages, {2} unread	inbox title: 0=name 1=messages 2=unread
+SOCIAL_INBOX_EMPTY	No messages.	fallback when the inbox is empty
+SOCIAL_INBOX_UNREAD	unread	state of an inbox message
+SOCIAL_INBOX_DETAILS	Read in full	inbox action opening the whole message
+SOCIAL_INBOX_REMOVE	Remove	inbox action, fallback
+SOCIAL_INBOX_CLEAR_ALL	Clear all	inbox button, fallback
+SOCIAL_INBOX_NEW_FORMAT	New in your inbox: {0} unread	0=unread messages
+SOCIAL_STATS	Statistics	title of the stats page
+SOCIAL_STATS_HELP	Up and down arrows: read the statistics line by line. Left and right arrows: move through the page's controls. Enter: activate. Escape: back to the profile.	F1 on the stats page
+SOCIAL_STATS_EMPTY	No statistics shown.	the stats page has no text
+SOCIAL_REQUEST_SENT_FORMAT	{0}, friend request sent	friends panel: outgoing request
+SOCIAL_REQUEST_RECEIVED_FORMAT	Friend request from {0}	notification
+SOCIAL_REQUEST_ACCEPTED_FORMAT	{0} accepted your friend request	notification
+SOCIAL_FRIEND_CAME_ONLINE_FORMAT	{0} is now online	notification
+SOCIAL_INVITE_CANCELLED	A battle challenge was cancelled.	notification
